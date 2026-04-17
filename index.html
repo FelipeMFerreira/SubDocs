@@ -64,7 +64,7 @@ label{font-size:11px;color:#185FA5;font-weight:700;text-transform:uppercase;lett
 // =====================================================
 // COLE AQUI A URL DO SEU APPS SCRIPT
 // =====================================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxBDTRiw8iPVlxRhYFRWsLa6ryCb7svRTYjOKxTKM33u4HjlvM1HTI61fabcHJ0PEiuAg/exec';
+const SCRIPT_URL = 'COLE_AQUI_A_URL_DO_APPS_SCRIPT';
 // =====================================================
 
 const STEPS=[
@@ -100,24 +100,40 @@ let _saveTimer=null;
 function showSave(){const b=document.getElementById('save-bar');if(b){b.className='save-bar vis';clearTimeout(_saveTimer);_saveTimer=setTimeout(()=>b.className='save-bar',2000);}}
 function showErr(){const b=document.getElementById('err-bar');if(b){b.className='err-bar vis';setTimeout(()=>b.className='err-bar',4000);}}
 
+const USE_LOCAL = !SCRIPT_URL || SCRIPT_URL==='COLE_AQUI_A_URL_DO_APPS_SCRIPT';
+const lsLoad=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}};
+const lsSave=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+
 async function init(){
+  if(USE_LOCAL){
+    S.orders=lsLoad('sd_orders')||[];
+    S.funds=lsLoad('sd_funds')||{investidor:[...DF_INV],investido:[...DF_IVD]};
+    S.loading=false;R();return;
+  }
   try{
     const resp=await fetch(SCRIPT_URL+'?action=getData');
-    const data=await resp.json();
+    const text=await resp.text();
+    const data=JSON.parse(text);
     S.orders=data.orders||[];
     S.funds=data.funds||{investidor:[...DF_INV],investido:[...DF_IVD]};
   }catch(err){
     console.error('Erro ao carregar:',err);
+    S.orders=lsLoad('sd_orders')||[];
+    S.funds=lsLoad('sd_funds')||{investidor:[...DF_INV],investido:[...DF_IVD]};
   }
   S.loading=false;R();
 }
 
 function saveO(){
+  lsSave('sd_orders',S.orders);
+  if(USE_LOCAL)return;
   showSave();
   fetch(SCRIPT_URL+'?action=save&type=orders&data='+encodeURIComponent(JSON.stringify(S.orders)))
     .catch(()=>showErr());
 }
 function saveF(){
+  lsSave('sd_funds',S.funds);
+  if(USE_LOCAL)return;
   showSave();
   fetch(SCRIPT_URL+'?action=save&type=funds&data='+encodeURIComponent(JSON.stringify(S.funds)))
     .catch(()=>showErr());
@@ -129,7 +145,7 @@ const status=o=>{const p=pct(o);return p===100?'Concluído':p===0?'Não iniciado
 const bcls=o=>{const p=pct(o);return p===100?'b-ok':p===0?'b-info':'b-warn';};
 const fmtV=o=>{if(!o.valor)return'—';try{return new Intl.NumberFormat('pt-BR',{style:'currency',currency:o.moeda||'USD',maximumFractionDigits:0}).format(o.valor);}catch{return o.valor;}};
 const e=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
-const DL=()=>`<datalist id="gest-dl">${ADMINS.map(g=>`<option value="${e(g)}">`).join('')}${HFUNDS.map(g=>`<option value="${e(g)}">`).join('')}</datalist>`;
+const fmtD=d=>{if(!d)return null;const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`;};`<datalist id="gest-dl">${ADMINS.map(g=>`<option value="${e(g)}">`).join('')}${HFUNDS.map(g=>`<option value="${e(g)}">`).join('')}</datalist>`;
 
 function R(){
   const root=document.getElementById('root');if(!root)return;
@@ -189,6 +205,7 @@ function vOrders(){
             <div style="font-size:13px;color:#444;display:flex;align-items:center;gap:6px">${e(o.gestora)||'—'}${o.inKind?' <span class="badge b-ik">In-Kind</span>':''}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            ${o.wire?`<span style="font-size:12px;font-weight:600;color:#854F0B;background:#FAEEDA;padding:2px 8px;border-radius:100px">Wire: ${fmtD(o.wire)}</span>`:''}
             <span class="badge ${bcls(o)}">${status(o)}</span>
             <span style="font-size:13px;color:#444">${e(o.tipo)||''}</span>
           </div>
@@ -242,6 +259,9 @@ function rForm(){
     </div>
     <div class="fr">
       <div class="fg"><label>Valor</label><input type="number" id="f-val" placeholder="0" min="0"></div>
+      <div class="fg"><label>Data Limite Wire</label><input type="date" id="f-wire"></div>
+    </div>
+    <div class="fr">
       <div class="fg" style="display:flex;flex-direction:column;justify-content:flex-end">
         <label>In-Kind</label>
         <div class="tog-wrap" onclick="togIK()">
@@ -370,6 +390,7 @@ function createOrd(){
     tipo:document.getElementById('f-tipo').value,
     valor:parseFloat(document.getElementById('f-val').value)||0,
     moeda:document.getElementById('f-moe').value,
+    wire:document.getElementById('f-wire').value,
     inKind:_ik,
     steps:STEPS.map(()=>({done:false,obs:''})),
     createdAt:new Date().toISOString(),
