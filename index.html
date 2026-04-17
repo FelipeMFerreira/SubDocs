@@ -7,7 +7,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a1a1a;font-size:16px;line-height:1.6;background:#f5f5f3;padding:1rem}
-.wrap{max-width:900px;margin:0 auto;background:#fff;border-radius:12px;padding:1.5rem;min-height:100vh}
+.wrap{max-width:960px;margin:0 auto;background:#fff;border-radius:12px;padding:1.5rem;min-height:100vh}
 .nav{display:flex;gap:6px;padding-bottom:12px;border-bottom:1px solid #e0e0e0;margin-bottom:1.25rem;align-items:center}
 .nb{background:none;border:none;padding:6px 16px;cursor:pointer;border-radius:8px;color:#555;font-size:14px}
 .nb.active{background:#E6F1FB;color:#0C447C;font-weight:600}
@@ -18,6 +18,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1
 .btn.p:hover{background:#0C447C}
 .btn.sm{padding:4px 10px;font-size:12px}
 .btn.dr{color:#c0392b;border-color:#e0b0b0}
+.btn.gr{background:#2d7a2d;color:#fff;border-color:transparent}
+.btn.gr:hover{background:#1f5c1f}
+.btn.am{background:#854F0B;color:#fff;border-color:transparent}
+.btn.am:hover{background:#633806}
 .card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:1rem 1.25rem}
 .pb{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden}
 .pf{height:100%;border-radius:3px;background:#185FA5;transition:width .3s}
@@ -27,12 +31,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1
 .b-info{background:#E6F1FB;color:#0C447C}
 .b-ik{background:#E1F5EE;color:#0F6E56}
 .b-no{background:#f0f0f0;color:#555}
+.b-red{background:#FCEBEB;color:#A32D2D}
+.b-ora{background:#FAEEDA;color:#854F0B}
 input,select{font-family:inherit;font-size:15px;font-weight:500;color:#1a1a1a;background:#fff;border:1px solid #ccc;border-radius:8px;padding:9px 12px;width:100%}
 input[type=checkbox]{width:auto;accent-color:#185FA5;transform:scale(1.2)}
 input:focus,select:focus{outline:none;box-shadow:0 0 0 2px #B5D4F4;border-color:#185FA5}
 label{font-size:11px;color:#185FA5;font-weight:700;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px}
 .fg{margin-bottom:12px}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
 .ifrm{background:#f7f9fc;border:2px solid #185FA5;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
 .tog-wrap{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;user-select:none}
 .tog{width:36px;height:20px;background:#ccc;border-radius:10px;position:relative;transition:background .2s;flex-shrink:0}
@@ -47,10 +54,23 @@ label{font-size:11px;color:#185FA5;font-weight:700;text-transform:uppercase;lett
 .tag{display:inline-flex;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:600;background:#E6F1FB;color:#0C447C;margin-right:4px}
 .ord-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:1rem 1.25rem;cursor:pointer;transition:border-color .18s}
 .ord-card:hover{border-color:#B5D4F4;border-left:3px solid #185FA5}
+.ord-card.wire-urgent{border-color:#f09595;border-left:3px solid #E24B4A}
+.ord-card.wire-overdue{border-color:#E24B4A;border-left:3px solid #A32D2D;background:#FFF8F8}
+.div-alert{background:#FCEBEB;border:1px solid #f09595;border-radius:8px;padding:8px 12px;font-size:13px;color:#A32D2D;font-weight:600;margin-top:10px;display:flex;align-items:center;gap:6px}
 .save-bar{position:fixed;bottom:16px;right:16px;background:#185FA5;color:#fff;font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;display:none;z-index:999}
 .save-bar.vis{display:block}
 .err-bar{position:fixed;bottom:16px;right:16px;background:#c0392b;color:#fff;font-size:12px;font-weight:600;padding:8px 16px;border-radius:20px;display:none;z-index:999}
 .err-bar.vis{display:block}
+.filter-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.filter-bar select{width:auto;font-size:13px;padding:6px 10px}
+@media print{
+  body{background:#fff;padding:0}
+  .wrap{border-radius:0;padding:1rem;min-height:auto}
+  .no-print{display:none!important}
+  .print-section{display:block!important}
+  .step-item{filter:none!important;opacity:1!important;transform:none!important;page-break-inside:avoid}
+}
+.print-section{display:none}
 </style>
 </head>
 <body>
@@ -58,14 +78,10 @@ label{font-size:11px;color:#185FA5;font-weight:700;text-transform:uppercase;lett
   <div id="root"></div>
 </div>
 <div class="save-bar" id="save-bar">Salvando...</div>
-<div class="err-bar" id="err-bar">Erro ao salvar. Verifique a conexão.</div>
-
+<div class="err-bar" id="err-bar">Erro ao salvar.</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-// =====================================================
-// COLE AQUI A URL DO SEU APPS SCRIPT
-// =====================================================
-const SCRIPT_URL = 'COLE_AQUI_A_URL_DO_APPS_SCRIPT';
-// =====================================================
+const SCRIPT_URL='COLE_AQUI_A_URL_DO_APPS_SCRIPT';
 
 const STEPS=[
   {n:1,lbl:'Confirmar com gestão o valor do aporte',resp:'Operações',prazo:'D+0'},
@@ -87,27 +103,25 @@ const STEPS=[
   {n:17,lbl:'Avisar gestão sobre a finalização do processo',resp:'Operações',prazo:'Assim que tiver confirmação da casa'},
 ];
 
-const ADMINS=['The Catalyst Group','Apex Group','Alter Domus','Augentius','Aztec Group','BNY Mellon','Carey Olsen','Citi Fund Services','Citco','Conyers','Deutsche Bank','Elysium Fund Management','HedgeServ','HSBC Securities Services','Intertrust Group','IQ EQ','JPMorgan Chase','Mainstream Group','Maples Group','Mourant','NAV Consulting','Northern Trust','Ogier','SEI Investments','SS&C Technologies','State Street','TMF Group','Trident Trust','UBS Fund Services','Vistra','Walkers Fund Services'];
-const HFUNDS=['AQR Capital Management','Anchorage Capital Group','Appaloosa Management','Balyasny Asset Management','Baupost Group','Brevan Howard','Bridgewater Associates','Capula Investment Management','Citadel','Coatue Management','D.E. Shaw','Elliott Management','Glenview Capital Management','Graham Capital Management','Greenlight Capital','Jana Partners','King Street Capital','Lone Pine Capital','Man Group','Marshall Wace','Millennium Management','Pershing Square Capital Management','Point72 Asset Management','Renaissance Technologies','Sculptor Capital Management','Third Point','Tiger Global Management','Two Sigma','Viking Global Investors','Winton Group'];
-
+const ADMINS_DEF=['The Catalyst Group','Apex Group','Alter Domus','Augentius','Aztec Group','BNY Mellon','Carey Olsen','Citi Fund Services','Citco','Conyers','Deutsche Bank','Elysium Fund Management','HedgeServ','HSBC Securities Services','Intertrust Group','IQ EQ','JPMorgan Chase','Mainstream Group','Maples Group','Mourant','NAV Consulting','Northern Trust','Ogier','SEI Investments','SS&C Technologies','State Street','TMF Group','Trident Trust','UBS Fund Services','Vistra','Walkers Fund Services','AQR Capital Management','Anchorage Capital Group','Appaloosa Management','Balyasny Asset Management','Baupost Group','Brevan Howard','Bridgewater Associates','Capula Investment Management','Citadel','Coatue Management','D.E. Shaw','Elliott Management','Glenview Capital Management','Graham Capital Management','Greenlight Capital','Jana Partners','King Street Capital','Lone Pine Capital','Man Group','Marshall Wace','Millennium Management','Pershing Square Capital Management','Point72 Asset Management','Renaissance Technologies','Sculptor Capital Management','Third Point','Tiger Global Management','Two Sigma','Viking Global Investors','Winton Group'];
 const DF_INV=['Euskadi Investments Ltd.','Olympic Bahamas Ltd.','RM Fund Ltd.','CB Fund LP','Graybar Financial Services Corporation','AMGS Investments Ltd.','Bagli Limited','Wentworth Fund Icon','Peachbay International Corp','Teesdale Corporation','Tera Global SPC - Tera HF SP','Tera Global SPC - Tera Core Bonds SP','Tera Global SPC - Tera Trend Following SP','Duvall Enterprises Inc.','Fide Co Ltd.','Triboju Ltd.'];
 const DF_IVD=['TERA HF SP','TERA CORE BONDS SP','TERA TREND FOLLOWING SP'];
 
-let S={view:'orders',orders:[],funds:{investidor:[...DF_INV],investido:[...DF_IVD]},selId:null,showForm:false,fd:{},focusStep:0,loading:true};
+const USE_LOCAL=!SCRIPT_URL||SCRIPT_URL==='COLE_AQUI_A_URL_DO_APPS_SCRIPT';
+const lsLoad=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}};
+const lsSave=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+
+let S={view:'orders',orders:[],funds:{investidor:[...DF_INV],investido:[...DF_IVD],admins:[...ADMINS_DEF]},selId:null,showForm:false,focusStep:0,loading:true,filters:{fiv:'',tipo:'',status:''}};
 let _ik=false;
 let _saveTimer=null;
 
 function showSave(){const b=document.getElementById('save-bar');if(b){b.className='save-bar vis';clearTimeout(_saveTimer);_saveTimer=setTimeout(()=>b.className='save-bar',2000);}}
 function showErr(){const b=document.getElementById('err-bar');if(b){b.className='err-bar vis';setTimeout(()=>b.className='err-bar',4000);}}
 
-const USE_LOCAL = !SCRIPT_URL || SCRIPT_URL==='COLE_AQUI_A_URL_DO_APPS_SCRIPT';
-const lsLoad=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}};
-const lsSave=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
-
 async function init(){
   if(USE_LOCAL){
     S.orders=lsLoad('sd_orders')||[];
-    S.funds=lsLoad('sd_funds')||{investidor:[...DF_INV],investido:[...DF_IVD]};
+    S.funds=lsLoad('sd_funds')||{investidor:[...DF_INV],investido:[...DF_IVD],admins:[...ADMINS_DEF]};
     S.loading=false;R();return;
   }
   try{
@@ -115,11 +129,10 @@ async function init(){
     const text=await resp.text();
     const data=JSON.parse(text);
     S.orders=data.orders||[];
-    S.funds=data.funds||{investidor:[...DF_INV],investido:[...DF_IVD]};
+    S.funds=data.funds||{investidor:[...DF_INV],investido:[...DF_IVD],admins:[...ADMINS_DEF]};
   }catch(err){
-    console.error('Erro ao carregar:',err);
     S.orders=lsLoad('sd_orders')||[];
-    S.funds=lsLoad('sd_funds')||{investidor:[...DF_INV],investido:[...DF_IVD]};
+    S.funds=lsLoad('sd_funds')||{investidor:[...DF_INV],investido:[...DF_IVD],admins:[...ADMINS_DEF]};
   }
   S.loading=false;R();
 }
@@ -128,15 +141,13 @@ function saveO(){
   lsSave('sd_orders',S.orders);
   if(USE_LOCAL)return;
   showSave();
-  fetch(SCRIPT_URL+'?action=save&type=orders&data='+encodeURIComponent(JSON.stringify(S.orders)))
-    .catch(()=>showErr());
+  fetch(SCRIPT_URL+'?action=save&type=orders&data='+encodeURIComponent(JSON.stringify(S.orders))).catch(()=>showErr());
 }
 function saveF(){
   lsSave('sd_funds',S.funds);
   if(USE_LOCAL)return;
   showSave();
-  fetch(SCRIPT_URL+'?action=save&type=funds&data='+encodeURIComponent(JSON.stringify(S.funds)))
-    .catch(()=>showErr());
+  fetch(SCRIPT_URL+'?action=save&type=funds&data='+encodeURIComponent(JSON.stringify(S.funds))).catch(()=>showErr());
 }
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -144,20 +155,35 @@ const pct=o=>Math.round(o.steps.filter(s=>s.done).length/STEPS.length*100);
 const status=o=>{const p=pct(o);return p===100?'Concluído':p===0?'Não iniciado':'Em andamento';};
 const bcls=o=>{const p=pct(o);return p===100?'b-ok':p===0?'b-info':'b-warn';};
 const fmtV=o=>{if(!o.valor)return'—';try{return new Intl.NumberFormat('pt-BR',{style:'currency',currency:o.moeda||'USD',maximumFractionDigits:0}).format(o.valor);}catch{return o.valor;}};
-const e=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const fmtNum=(v,m)=>{if(!v&&v!==0)return'—';try{return new Intl.NumberFormat('pt-BR',{style:'currency',currency:m||'USD',maximumFractionDigits:0}).format(v);}catch{return v;}};
 const fmtD=d=>{if(!d)return null;const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`;};
-const DL=()=>`<datalist id="gest-dl">${ADMINS.map(g=>`<option value="${e(g)}">`).join('')}${HFUNDS.map(g=>`<option value="${e(g)}">`).join('')}</datalist>`;`<datalist id="gest-dl">${ADMINS.map(g=>`<option value="${e(g)}">`).join('')}${HFUNDS.map(g=>`<option value="${e(g)}">`).join('')}</datalist>`;
+const e=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const DL=()=>`<datalist id="gest-dl">${(S.funds.admins||ADMINS_DEF).map(g=>`<option value="${e(g)}">`).join('')}</datalist>`;
+
+function wireStatus(o){
+  if(!o.wire)return null;
+  const today=new Date();today.setHours(0,0,0,0);
+  const wd=new Date(o.wire+'T00:00:00');
+  const diff=Math.round((wd-today)/(1000*60*60*24));
+  if(diff<0)return{cls:'wire-overdue',badge:'b-red',lbl:'Wire vencida'};
+  if(diff===0)return{cls:'wire-urgent',badge:'b-red',lbl:'Wire hoje'};
+  if(diff===1)return{cls:'wire-urgent',badge:'b-ora',lbl:'Wire amanhã'};
+  if(diff===2)return{cls:'wire-urgent',badge:'b-ora',lbl:`Wire em 2 dias`};
+  return{cls:'',badge:'b-info',lbl:`Wire: ${fmtD(o.wire)}`};
+}
+
+function hasDivergence(o){
+  if(!o.valorConfirmado&&o.valorConfirmado!==0)return false;
+  return parseFloat(o.valorConfirmado)!==parseFloat(o.valor);
+}
 
 function R(){
   const root=document.getElementById('root');if(!root)return;
   if(S.loading){
-    root.innerHTML=`<div style="text-align:center;padding:4rem;color:#555">
-      <div style="font-size:14px;color:#185FA5;font-weight:600;margin-bottom:8px">Carregando dados...</div>
-      <div style="font-size:12px;color:#888">Conectando ao Google Sheets</div>
-    </div>`;
+    root.innerHTML=`<div style="text-align:center;padding:4rem;color:#555"><div style="font-size:14px;color:#185FA5;font-weight:600;margin-bottom:8px">Carregando dados...</div></div>`;
     return;
   }
-  let h=`<div class="nav">
+  let h=`<div class="nav no-print">
     <button class="nb${S.view!=='funds'?' active':''}" onclick="go('orders')">Ordens</button>
     <button class="nb${S.view==='funds'?' active':''}" onclick="go('funds')">Fundos</button>
   </div>`;
@@ -168,20 +194,36 @@ function R(){
 }
 
 function vOrders(){
-  const os=S.orders;
-  const concl=os.filter(o=>pct(o)===100).length;
-  const and=os.filter(o=>pct(o)>0&&pct(o)<100).length;
+  const all=S.orders;
+  const concl=all.filter(o=>pct(o)===100).length;
+  const and=all.filter(o=>pct(o)>0&&pct(o)<100).length;
+  const urgent=all.filter(o=>{const w=wireStatus(o);return w&&(w.cls==='wire-urgent'||w.cls==='wire-overdue');}).length;
+
+  let os=[...all];
+  const fFiv=S.filters.fiv;const fTipo=S.filters.tipo;const fSt=S.filters.status;
+  if(fFiv)os=os.filter(o=>o.fiv===fFiv);
+  if(fTipo)os=os.filter(o=>o.tipo===fTipo);
+  if(fSt){
+    if(fSt==='Concluído')os=os.filter(o=>pct(o)===100);
+    else if(fSt==='Em andamento')os=os.filter(o=>pct(o)>0&&pct(o)<100);
+    else if(fSt==='Não iniciado')os=os.filter(o=>pct(o)===0);
+    else if(fSt==='Urgente')os=os.filter(o=>{const w=wireStatus(o);return w&&w.cls!=='';});
+  }
+
   let h=`<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1.5rem">
     <div>
       <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#185FA5;font-weight:700;margin-bottom:4px">Operações Offshore</div>
       <h1 style="font-size:26px;font-weight:700">Painel de Subscription Documents</h1>
     </div>
-    <button class="btn p" onclick="togForm()">+ Nova ordem</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn am sm" onclick="exportXLSX()">Exportar XLSX</button>
+      <button class="btn p" onclick="togForm()">+ Nova ordem</button>
+    </div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:1.5rem">
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem">
     <div style="background:#E6F1FB;border-radius:8px;padding:.875rem;border:1px solid #B5D4F4">
-      <div style="font-size:11px;color:#185FA5;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;font-weight:700">Total de ordens</div>
-      <div style="font-size:24px;font-weight:700;color:#0C447C">${os.length}</div>
+      <div style="font-size:11px;color:#185FA5;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;font-weight:700">Total</div>
+      <div style="font-size:24px;font-weight:700;color:#0C447C">${all.length}</div>
     </div>
     <div style="background:#FAEEDA;border-radius:8px;padding:.875rem;border:1px solid #FAC775">
       <div style="font-size:11px;color:#854F0B;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;font-weight:700">Em andamento</div>
@@ -191,22 +233,53 @@ function vOrders(){
       <div style="font-size:11px;color:#2d7a2d;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;font-weight:700">Concluídas</div>
       <div style="font-size:24px;font-weight:700;color:#2d7a2d">${concl}</div>
     </div>
+    <div style="background:${urgent>0?'#FCEBEB':'#f5f5f3'};border-radius:8px;padding:.875rem;border:1px solid ${urgent>0?'#f09595':'#e0e0e0'}">
+      <div style="font-size:11px;color:${urgent>0?'#A32D2D':'#888'};text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;font-weight:700">Wire urgente</div>
+      <div style="font-size:24px;font-weight:700;color:${urgent>0?'#A32D2D':'#888'}">${urgent}</div>
+    </div>
   </div>`;
+
   if(S.showForm)h+=rForm();
+
+  const fivOpts=[...new Set(all.map(o=>o.fiv).filter(Boolean))];
+  h+=`<div class="filter-bar no-print">
+    <span style="font-size:13px;font-weight:600;color:#555">Filtros:</span>
+    <select style="width:180px" onchange="setFilter('fiv',this.value)">
+      <option value="">Todos os fundos</option>
+      ${fivOpts.map(f=>`<option value="${e(f)}"${fFiv===f?' selected':''}>${e(f)}</option>`).join('')}
+    </select>
+    <select style="width:150px" onchange="setFilter('tipo',this.value)">
+      <option value="">Todos os tipos</option>
+      <option value="Subscription"${fTipo==='Subscription'?' selected':''}>Subscription</option>
+      <option value="Redemption"${fTipo==='Redemption'?' selected':''}>Redemption</option>
+    </select>
+    <select style="width:150px" onchange="setFilter('status',this.value)">
+      <option value="">Todos os status</option>
+      <option value="Não iniciado"${fSt==='Não iniciado'?' selected':''}>Não iniciado</option>
+      <option value="Em andamento"${fSt==='Em andamento'?' selected':''}>Em andamento</option>
+      <option value="Concluído"${fSt==='Concluído'?' selected':''}>Concluído</option>
+      <option value="Urgente"${fSt==='Urgente'?' selected':''}>Wire urgente</option>
+    </select>
+    ${(fFiv||fTipo||fSt)?`<button class="btn sm" onclick="clearFilters()">Limpar filtros</button>`:''}
+    <span style="font-size:12px;color:#888;margin-left:4px">${os.length} de ${all.length} ordens</span>
+  </div>`;
+
   if(os.length===0){
-    h+=`<div style="text-align:center;padding:3rem 1rem;color:#555;border:1px dashed #ccc;border-radius:12px">Nenhuma ordem cadastrada ainda.<br>Clique em <strong style="color:#185FA5">+ Nova ordem</strong> para começar.</div>`;
+    h+=`<div style="text-align:center;padding:3rem 1rem;color:#555;border:1px dashed #ccc;border-radius:12px">${all.length===0?'Nenhuma ordem cadastrada ainda.<br>Clique em <strong style="color:#185FA5">+ Nova ordem</strong> para começar.':'Nenhuma ordem encontrada com os filtros selecionados.'}</div>`;
   }else{
     h+=`<div style="display:flex;flex-direction:column;gap:8px">`;
     for(const o of os){
       const p=pct(o);const dn=o.steps.filter(s=>s.done).length;
-      h+=`<div class="ord-card" onclick="openDet('${o.id}')">
+      const ws=wireStatus(o);const div=hasDivergence(o);
+      h+=`<div class="ord-card${ws?' '+ws.cls:''}" onclick="openDet('${o.id}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
           <div>
             <div style="font-weight:600;margin-bottom:3px;font-size:15px">${e(o.fi)||'—'} <span style="color:#185FA5">→</span> ${e(o.fiv)||'—'}</div>
             <div style="font-size:13px;color:#444;display:flex;align-items:center;gap:6px">${e(o.gestora)||'—'}${o.inKind?' <span class="badge b-ik">In-Kind</span>':''}</div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-            ${o.wire?`<span style="font-size:12px;font-weight:600;color:#854F0B;background:#FAEEDA;padding:2px 8px;border-radius:100px">Wire: ${fmtD(o.wire)}</span>`:''}
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
+            ${ws?`<span class="badge ${ws.badge}">${ws.lbl}</span>`:''}
+            ${div?`<span class="badge b-red">Divergência</span>`:''}
             <span class="badge ${bcls(o)}">${status(o)}</span>
             <span style="font-size:13px;color:#444">${e(o.tipo)||''}</span>
           </div>
@@ -245,7 +318,7 @@ function rForm(){
       </select></div>
     </div>
     <div class="fg"><label>Gestora / Administradora do fundo investido</label>
-      <input type="text" id="f-gest" list="gest-dl" placeholder="Selecione ou escreva o nome...">
+      <input type="text" id="f-gest" list="gest-dl" placeholder="Selecione ou escreva...">
     </div>
     <div class="fr">
       <div class="fg"><label>Tipo</label><select id="f-tipo">
@@ -258,11 +331,9 @@ function rForm(){
         <option value="BRL">BRL</option>
       </select></div>
     </div>
-    <div class="fr">
+    <div class="fr3">
       <div class="fg"><label>Valor</label><input type="number" id="f-val" placeholder="0" min="0"></div>
       <div class="fg"><label>Data Limite Wire</label><input type="date" id="f-wire"></div>
-    </div>
-    <div class="fr">
       <div class="fg" style="display:flex;flex-direction:column;justify-content:flex-end">
         <label>In-Kind</label>
         <div class="tog-wrap" onclick="togIK()">
@@ -281,28 +352,39 @@ function vDetail(){
   const o=S.orders.find(x=>x.id===S.selId);
   if(!o){go('orders');return'';}
   const dn=o.steps.filter(s=>s.done).length;const p=pct(o);const f=S.focusStep;
-  let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem">
+  const ws=wireStatus(o);const div=hasDivergence(o);
+  let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem" class="no-print">
     <button class="btn sm" onclick="go('orders')">← Voltar</button>
     <div style="flex:1">
       <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#185FA5;margin-bottom:2px;font-weight:700">${e(o.tipo)||'—'} · ${e(o.gestora)||'—'}</div>
       <h1 style="font-size:16px;font-weight:700">${e(o.fi)||'—'} <span style="color:#185FA5">→</span> ${e(o.fiv)||'—'}</h1>
     </div>
+    <button class="btn sm gr" onclick="printOrd()">Exportar PDF</button>
     <button class="btn sm dr" onclick="delOrd('${o.id}')">Excluir</button>
   </div>
   <div class="card" style="margin-bottom:1rem;border-top:2px solid #185FA5">
     <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px">
-      <div><label style="font-weight:700">Fundo investidor</label><span style="font-size:16px;font-weight:400">${e(o.fi)||'—'}</span></div>
-      <div><label style="font-weight:700">Fundo investido</label><span style="font-size:16px;font-weight:400">${e(o.fiv)||'—'}</span></div>
+      <div><label style="font-weight:700">Fundo investidor</label><span style="font-size:15px;font-weight:400">${e(o.fi)||'—'}</span></div>
+      <div><label style="font-weight:700">Fundo investido</label><span style="font-size:15px;font-weight:400">${e(o.fiv)||'—'}</span></div>
       <div><label style="font-weight:700">Gestora / Admin.</label><span style="font-size:15px;font-weight:400">${e(o.gestora)||'—'}</span></div>
       <div><label style="font-weight:700">Tipo</label><span style="font-size:15px;font-weight:400">${e(o.tipo)||'—'}</span></div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
-      <div><label style="font-weight:700">Valor</label><span style="font-size:17px;font-weight:400">${fmtV(o)}</span></div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px">
+      <div><label style="font-weight:700">Valor enviado</label><span style="font-size:16px;font-weight:400">${fmtV(o)}</span></div>
       <div><label style="font-weight:700">Moeda</label><span style="font-size:15px;font-weight:400">${o.moeda||'—'}</span></div>
+      <div><label style="font-weight:700">Data Limite Wire</label><span style="font-size:15px;font-weight:400${ws&&ws.cls?';color:#A32D2D':''}">${fmtD(o.wire)||'—'}${ws?` <span class="badge ${ws.badge}">${ws.lbl}</span>`:''}</span></div>
       <div><label style="font-weight:700">In-Kind</label><span class="badge ${o.inKind?'b-ik':'b-no'}">${o.inKind?'Sim':'Não'}</span></div>
     </div>
+    <div style="border-top:1px solid #e0e0e0;padding-top:12px">
+      <label style="font-weight:700">Valor confirmado pela contraparte</label>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:4px">
+        <input type="number" style="max-width:220px" placeholder="Digite o valor confirmado..." value="${o.valorConfirmado||''}" onchange="updConfirmado('${o.id}',this.value)">
+        ${o.valorConfirmado?`<span style="font-size:15px;font-weight:500">${fmtNum(o.valorConfirmado,o.moeda)}</span>`:''}
+      </div>
+      ${div?`<div class="div-alert">⚠ Divergência detectada: enviado ${fmtV(o)} · confirmado ${fmtNum(o.valorConfirmado,o.moeda)}</div>`:''}
+    </div>
   </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px" class="no-print">
     <span style="font-size:14px;font-weight:700">${dn}/${STEPS.length} etapas concluídas · ${p}%</span>
     <div style="display:flex;gap:6px;align-items:center">
       <button class="btn sm" onclick="navStep(${f-1})" ${f===0?'disabled':''}>←</button>
@@ -327,11 +409,12 @@ function vDetail(){
         <div class="snum${st.done?' dn':''}">${s.n}</div>
         <div style="flex:1">
           <div style="display:flex;align-items:flex-start;gap:8px">
-            <input type="checkbox" style="margin-top:3px" ${st.done?'checked':''} onchange="togStep('${o.id}',${i},this.checked)" onclick="event.stopPropagation()">
+            <input type="checkbox" style="margin-top:3px" ${st.done?'checked':''} onchange="togStep('${o.id}',${i},this.checked)" onclick="event.stopPropagation()" class="no-print">
             <span style="font-size:${isActive?'15px':'14px'};font-weight:${isActive?'600':'400'};line-height:1.5;${st.done?'text-decoration:line-through;color:#888':''}">${e(s.lbl)}</span>
           </div>
           <div style="font-size:12px;color:#444;margin-top:4px;margin-left:24px"><span class="tag">${s.resp}</span>${e(s.prazo)}</div>
-          ${isActive?`<input type="text" style="margin-top:8px;font-size:13px;padding:6px 10px;margin-left:24px;width:calc(100% - 24px)" placeholder="Observação..." value="${e(st.obs||'')}" data-oid="${o.id}" data-idx="${i}" onchange="updObs(this)" onclick="event.stopPropagation()">`:``}
+          ${st.obs?`<div style="font-size:12px;color:#555;margin-top:4px;margin-left:24px;font-style:italic">${e(st.obs)}</div>`:''}
+          ${isActive?`<input type="text" class="no-print" style="margin-top:8px;font-size:13px;padding:6px 10px;margin-left:24px;width:calc(100% - 24px)" placeholder="Observação..." value="${e(st.obs||'')}" data-oid="${o.id}" data-idx="${i}" onchange="updObs(this)" onclick="event.stopPropagation()">`:``}
         </div>
       </div>
     </div>`;
@@ -345,25 +428,37 @@ function vFunds(){
     <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#185FA5;font-weight:700;margin-bottom:4px">Configurações</div>
     <h1 style="font-size:22px;font-weight:700">Gerenciar fundos</h1>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">`;
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">`;
   for(const[key,label]of[['investidor','Fundos investidores'],['investido','Fundos investidos']]){
     const list=S.funds[key];
     h+=`<div class="card" style="border-top:2px solid #185FA5">
       <div style="font-weight:700;color:#0C447C;margin-bottom:12px;font-size:15px">${label}</div>
       <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">`;
     for(let i=0;i<list.length;i++){
-      h+=`<div style="display:flex;gap:6px">
-        <input type="text" value="${e(list[i])}" onchange="editF('${key}',${i},this.value)">
-        <button class="btn sm" style="flex-shrink:0" onclick="rmvF('${key}',${i})">×</button>
-      </div>`;
+      h+=`<div style="display:flex;gap:6px"><input type="text" value="${e(list[i])}" onchange="editF('${key}',${i},this.value)">
+        <button class="btn sm" style="flex-shrink:0" onclick="rmvF('${key}',${i})">×</button></div>`;
     }
     h+=`</div><button class="btn sm" onclick="addF('${key}')">+ Adicionar</button></div>`;
   }
-  h+=`</div><p style="font-size:13px;color:#555;margin-top:1rem">Edite diretamente. Salvo automaticamente no Google Sheets.</p>`;
+  h+=`</div>
+  <div class="card" style="border-top:2px solid #185FA5">
+    <div style="font-weight:700;color:#0C447C;margin-bottom:12px;font-size:15px">Gestoras / Administradoras</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">`;
+  const admins=S.funds.admins||[];
+  for(let i=0;i<admins.length;i++){
+    h+=`<div style="display:flex;gap:6px"><input type="text" value="${e(admins[i])}" onchange="editF('admins',${i},this.value)">
+      <button class="btn sm" style="flex-shrink:0" onclick="rmvF('admins',${i})">×</button></div>`;
+  }
+  h+=`</div><button class="btn sm" onclick="addF('admins')">+ Adicionar</button>
+  </div>
+  <p style="font-size:13px;color:#555;margin-top:1rem">Edite diretamente. Salvo automaticamente.</p>`;
   return h;
 }
 
+// Actions
 function go(v){S.view=v;S.showForm=false;R();}
+function setFilter(k,v){S.filters[k]=v;R();}
+function clearFilters(){S.filters={fiv:'',tipo:'',status:''};R();}
 function openDet(id){
   S.selId=id;S.view='detail';
   const o=S.orders.find(x=>x.id===id);
@@ -371,7 +466,7 @@ function openDet(id){
   R();
 }
 function togForm(){
-  S.showForm=!S.showForm;_ik=false;S.fd={};R();
+  S.showForm=!S.showForm;_ik=false;R();
   if(S.showForm)setTimeout(()=>{const f=document.getElementById('new-order-form');if(f){f.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>{const fi=document.getElementById('f-fi');if(fi)fi.focus();},300);}},60);
 }
 function togIK(){
@@ -382,6 +477,7 @@ function togIK(){
 }
 function setFocus(i){S.focusStep=i;R();}
 function navStep(i){if(i>=0&&i<STEPS.length){S.focusStep=i;R();}}
+
 function createOrd(){
   const o={
     id:uid(),
@@ -391,8 +487,9 @@ function createOrd(){
     tipo:document.getElementById('f-tipo').value,
     valor:parseFloat(document.getElementById('f-val').value)||0,
     moeda:document.getElementById('f-moe').value,
-    wire:document.getElementById('f-wire').value,
+    wire:document.getElementById('f-wire').value||null,
     inKind:_ik,
+    valorConfirmado:null,
     steps:STEPS.map(()=>({done:false,obs:''})),
     createdAt:new Date().toISOString(),
   };
@@ -401,10 +498,37 @@ function createOrd(){
 function delOrd(id){S.orders=S.orders.filter(o=>o.id!==id);S.view='orders';saveO();R();}
 function togStep(id,idx,val){const o=S.orders.find(x=>x.id===id);if(!o)return;o.steps[idx].done=val;saveO();R();}
 function updObs(el){const o=S.orders.find(x=>x.id===el.dataset.oid);if(o){o.steps[parseInt(el.dataset.idx)].obs=el.value;saveO();}}
+function updConfirmado(id,val){const o=S.orders.find(x=>x.id===id);if(!o)return;o.valorConfirmado=val===''?null:parseFloat(val);saveO();R();}
 function resetSt(id){const o=S.orders.find(x=>x.id===id);if(!o)return;o.steps.forEach(s=>{s.done=false;s.obs='';});saveO();R();}
-function addF(t){S.funds[t].push('');saveF();R();}
+function addF(t){if(!S.funds[t])S.funds[t]=[];S.funds[t].push('');saveF();R();}
 function editF(t,i,v){S.funds[t][i]=v;saveF();}
 function rmvF(t,i){S.funds[t].splice(i,1);saveF();R();}
+
+function printOrd(){window.print();}
+
+function exportXLSX(){
+  if(typeof XLSX==='undefined'){alert('Biblioteca XLSX não carregada. Tente novamente.');return;}
+  const rows=S.orders.map(o=>({
+    'Fundo Investidor':o.fi||'',
+    'Fundo Investido':o.fiv||'',
+    'Gestora/Admin':o.gestora||'',
+    'Tipo':o.tipo||'',
+    'Valor':o.valor||0,
+    'Moeda':o.moeda||'',
+    'Data Limite Wire':fmtD(o.wire)||'',
+    'In-Kind':o.inKind?'Sim':'Não',
+    'Valor Confirmado':o.valorConfirmado||'',
+    'Etapas Concluídas':o.steps.filter(s=>s.done).length,
+    'Total Etapas':STEPS.length,
+    'Progresso %':pct(o),
+    'Status':status(o),
+    'Criado em':o.createdAt?new Date(o.createdAt).toLocaleDateString('pt-BR'):'',
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Ordens',ws);
+  XLSX.writeFile(wb,'SubDoc_Ordens_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
 
 init();
 </script>
