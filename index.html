@@ -69,9 +69,9 @@ label{font-size:11px;color:#626367;font-weight:700;text-transform:uppercase;lett
     <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#F15D1B;font-weight:700;margin-bottom:6px">Operações Offshore</div>
     <div style="font-size:22px;font-weight:700;margin-bottom:2rem;color:#2D2D2D">Painel de Subscription Documents</div>
     <div id="login-err" style="display:none;background:#FCEBEB;border:1px solid #f09595;border-radius:8px;padding:8px 12px;font-size:13px;color:#A32D2D;font-weight:600;margin-bottom:12px">Usuário ou senha incorretos.</div>
-    <div class="fg"><label>Usuário</label><input type="text" id="l-user" placeholder="Seu nome de usuário" autocomplete="username"></div>
+    <div class="fg"><label>Usuário</label><input type="text" id="l-user" placeholder="Nome e sobrenome" autocomplete="username"></div>
     <div class="fg"><label>Senha</label><input type="password" id="l-pass" placeholder="Sua senha" autocomplete="current-password"></div>
-    <button class="btn p" style="width:100%;padding:10px;font-size:15px;font-weight:600;margin-top:8px" onclick="doLogin()">Entrar →</button>
+    <button class="btn p" id="login-btn" style="width:100%;padding:10px;font-size:15px;font-weight:600;margin-top:8px" onclick="doLogin()">Entrar →</button>
   </div>
 </div>
 
@@ -83,63 +83,89 @@ label{font-size:11px;color:#626367;font-weight:700;text-transform:uppercase;lett
 <div class="save-bar" id="save-bar">Salvando...</div>
 <div class="err-bar" id="err-bar">Erro ao salvar.</div>
 
-<script>
-var SCRIPT_URL='https://script.google.com/macros/s/AKfycbyAhI-jMXrH8gBOYvHgugrrRw2gdwlRsDAWu014WnJhPyKBcqZ0UG9fHfHnOFOyg9xVVw/exec';
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-var USERS=[
-  {user:'Felipe Ferreira',pass:'99360'},
-  {user:'Paulo Parisi',pass:'94228'},
-  {user:'Vitor Franca',pass:'97273'}
-];
+var firebaseConfig={
+  apiKey:'AIzaSyAOM4XjiAncNu1UDn32LTwh3uOob2jQ8XA',
+  authDomain:'mockup-subdocs.firebaseapp.com',
+  projectId:'mockup-subdocs',
+  storageBucket:'mockup-subdocs.firebasestorage.app',
+  messagingSenderId:'1059420070251',
+  appId:'1:1059420070251:web:0de34091d7f61e2b476c2e'
+};
 
-var currentUser=null;
+var app=initializeApp(firebaseConfig);
+var auth=getAuth(app);
 
-function doLogin(){
+// Mapa nome → email fictício
+var USER_MAP={
+  'felipe ferreira':'felipe.ferreira@subdoc.com',
+  'paulo parisi':'paulo.parisi@subdoc.com',
+  'vitor franca':'vitor.franca@subdoc.com'
+};
+
+// Mapa email → nome de exibição
+var NAME_MAP={
+  'felipe.ferreira@subdoc.com':'Felipe Ferreira',
+  'paulo.parisi@subdoc.com':'Paulo Parisi',
+  'vitor.franca@subdoc.com':'Vitor Franca'
+};
+
+window.doLogin=function(){
   var uEl=document.getElementById('l-user');
   var pEl=document.getElementById('l-pass');
-  var u=uEl?uEl.value.trim():'';
+  var u=(uEl?uEl.value.trim():'').toLowerCase();
   var p=pEl?pEl.value.trim():'';
-  var match=null;
-  for(var i=0;i<USERS.length;i++){
-    if(USERS[i].user.toLowerCase()===u.toLowerCase()&&USERS[i].pass.toLowerCase()===p.toLowerCase()){match=USERS[i];break;}
-  }
-  if(match){
-    currentUser=match.user;
-    try{localStorage.setItem('sd_session',JSON.stringify({user:currentUser,ts:Date.now()}));}catch(e){}
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    init();
-  }else{
+  var email=USER_MAP[u];
+  if(!email){
     document.getElementById('login-err').style.display='block';
     if(pEl)pEl.value='';
+    return;
   }
-}
-
-document.addEventListener('keydown',function(e){
-  if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none'){doLogin();}
-});
-
-function logout(){
-  try{localStorage.removeItem('sd_session');}catch(e){}
-  currentUser=null;
-  document.getElementById('app').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('l-user').value='';
-  document.getElementById('l-pass').value='';
+  var btn=document.getElementById('login-btn');
+  if(btn){btn.textContent='Entrando...';btn.disabled=true;}
   document.getElementById('login-err').style.display='none';
-}
-
-function checkSession(){
-  try{
-    var s=JSON.parse(localStorage.getItem('sd_session'));
-    if(s&&s.user&&(Date.now()-s.ts)<8*60*60*1000){
-      currentUser=s.user;
+  signInWithEmailAndPassword(auth,email,p)
+    .then(function(cred){
+      window.currentUser=NAME_MAP[cred.user.email]||cred.user.email;
       document.getElementById('login-screen').style.display='none';
       document.getElementById('app').style.display='block';
-      init();return;
-    }
-  }catch(e){}
-}
+      if(btn){btn.textContent='Entrar →';btn.disabled=false;}
+      window.init();
+    })
+    .catch(function(){
+      document.getElementById('login-err').style.display='block';
+      if(pEl)pEl.value='';
+      if(btn){btn.textContent='Entrar →';btn.disabled=false;}
+    });
+};
+
+window.logout=function(){
+  signOut(auth).then(function(){
+    window.currentUser=null;
+    document.getElementById('app').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('l-user').value='';
+    document.getElementById('l-pass').value='';
+    document.getElementById('login-err').style.display='none';
+  });
+};
+
+onAuthStateChanged(auth,function(user){
+  if(user){
+    window.currentUser=NAME_MAP[user.email]||user.email;
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    window.init();
+  }
+});
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none'){window.doLogin();}
+});
+</script>
 
 var STEPS=[
   {n:1,lbl:'Confirmar com gestão o valor do aporte',resp:'Operações',prazo:'D+0'},
@@ -174,7 +200,7 @@ var _ik=false,_saveTimer=null,_refreshTimer=null;
 function showSave(){var b=document.getElementById('save-bar');if(b){b.className='save-bar vis';clearTimeout(_saveTimer);_saveTimer=setTimeout(function(){b.className='save-bar';},2000);}}
 function showErr(){var b=document.getElementById('err-bar');if(b){b.className='err-bar vis';setTimeout(function(){b.className='err-bar';},4000);}}
 
-function init(){
+window.init=function init(){
   S.loading=true;
   if(_refreshTimer){clearInterval(_refreshTimer);_refreshTimer=null;}
   if(USE_LOCAL){S.orders=lsLoad('sd_orders')||[];S.funds=lsLoad('sd_funds')||JSON.parse(JSON.stringify(DF_FUNDS));S.loading=false;R();return;}
@@ -378,7 +404,7 @@ function addF(t){if(!S.funds[t])S.funds[t]=[];S.funds[t].push('');saveF();R();}
 function editF(t,i,v){S.funds[t][i]=v;saveF();}
 function rmvF(t,i){S.funds[t].splice(i,1);saveF();R();}
 
-checkSession();
+// fim do script app
 </script>
 </body>
 </html>
