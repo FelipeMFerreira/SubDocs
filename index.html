@@ -224,7 +224,7 @@ function init(){
     .catch(function(){      S.orders=lsLoad('sd_orders')||[];S.funds=lsLoad('sd_funds')||JSON.parse(JSON.stringify(DF_FUNDS));S.onshore=lsLoad('sd_onshore')||ON_DEFAULT.slice();S.docs=lsLoad('sd_docs')||[];S.loading=false;R();_refreshTimer=setInterval(autoRefresh,2000);});
 }
 function autoRefresh(){
-  if(S.showForm||S.editId||S.onNew||S.onEdit!==null||S.view==='onshore'||S.view==='docs'||S.view==='email'||S.docNew||S.docEdit!==null)return;
+  if(S.showForm||S.editId||S.onNew||S.onEdit!==null||S.view==='onshore'||S.view==='docs'||S.view==='email'||S.view==='detail'||S.docNew||S.docEdit!==null)return;
   fetch(SCRIPT_URL+'?action=getData&t='+Date.now())
     .then(function(r){return r.text();})
     .then(function(txt){
@@ -665,7 +665,19 @@ function saveEditOrd(id){
   S.editId=null;saveO();R();
 }
 function delOrd(id){S.orders=S.orders.filter(function(o){return o.id!==id;});S.view='orders';S.editId=null;saveO();R();}
-function togStep(id,idx,val){for(var i=0;i<S.orders.length;i++){if(S.orders[i].id===id){S.orders[i].steps[idx].done=val;break;}}saveO();R();}
+function togStep(id,idx,val){
+  for(var i=0;i<S.orders.length;i++){
+    if(S.orders[i].id===id){
+      S.orders[i].steps[idx].done=val;
+      if(val){
+        var next=idx+1;
+        if(next<STEPS.length) S.focusStep=next;
+      }
+      break;
+    }
+  }
+  saveO();R();
+}
 function updObs(el){for(var i=0;i<S.orders.length;i++){if(S.orders[i].id===el.dataset.oid){S.orders[i].steps[parseInt(el.dataset.idx)].obs=el.value;break;}}saveO();}
 function updConfirmado(id,val){for(var i=0;i<S.orders.length;i++){if(S.orders[i].id===id){S.orders[i].valorConfirmado=val===''?null:parseFloat(val);break;}}saveO();R();}
 function resetSt(id){for(var i=0;i<S.orders.length;i++){if(S.orders[i].id===id){S.orders[i].steps.forEach(function(s){s.done=false;s.obs='';});break;}}saveO();R();}
