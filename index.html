@@ -401,6 +401,11 @@ function docDel(i){if(!confirm('Excluir este documento?'))return;S.docs.splice(i
 function R(){
   var root=document.getElementById('root');if(!root)return;
   if(S.loading){root.innerHTML='<div style="text-align:center;padding:4rem;color:#626367"><div style="font-size:14px;color:#F15D1B;font-weight:600">Carregando dados...</div></div>';return;}
+
+  // salva foco antes de renderizar
+  var focusId=document.activeElement?document.activeElement.id:null;
+  var focusSel=document.activeElement&&document.activeElement.selectionStart!==undefined?document.activeElement.selectionStart:null;
+
   try{
     var h='<div class="nav">'+LOGO(56,22);
     h+='<button class="nb'+(S.view==='orders'?' active':'')+'" onclick="go(\'orders\')">Ordens</button>';
@@ -416,6 +421,17 @@ function R(){
     else if(S.view==='docs')h+=vDocs();
     else h+=vFunds();
     root.innerHTML=h;
+
+    // restaura foco
+    if(focusId){
+      var el=document.getElementById(focusId);
+      if(el){
+        el.focus();
+        if(focusSel!==null&&el.setSelectionRange){
+          try{el.setSelectionRange(focusSel,focusSel);}catch(e){}
+        }
+      }
+    }
   }catch(err){root.innerHTML='<div style="padding:2rem;color:#c0392b;background:#FCEBEB;border-radius:8px;margin:1rem">Erro: '+err.message+'<br><br><button class="btn p" onclick="go(\'orders\')">Tentar novamente</button></div>';}
 }
 
