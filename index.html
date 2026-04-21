@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Demandas Operations</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='80' font-size='90' font-family='Arial' font-weight='100' fill='%23F15D1B' text-anchor='middle'%3EO%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='75' font-family='Arial' font-size='72' font-weight='900' letter-spacing='-5' fill='%23F15D1B' text-anchor='middle'>OPS</text></svg>">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#2D2D2D;font-size:16px;line-height:1.6;background:#F7F7F7;padding:1rem}
@@ -643,41 +643,49 @@ function rForm(isEdit,o){
 function vFunds(){
   var h='<div style="margin-bottom:1.5rem"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#F15D1B;font-weight:700;margin-bottom:4px">Configura\u00e7\u00f5es</div><h1 style="font-size:22px;font-weight:700;color:#2D2D2D">Gerenciar fundos</h1></div>';
 
-  // Fundos investidores e investidos
+  // Fundos investidores e investidos em grid compacto
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">';
   var keys=[['investidor','Fundos investidores'],['investido','Fundos investidos']];
   for(var k=0;k<keys.length;k++){
     var key=keys[k][0],lbl=keys[k][1],lst=S.funds[key]||[];
-    h+='<div class="card" style="border-top:3px solid #F15D1B"><div style="font-weight:700;color:#4F5053;margin-bottom:12px;font-size:15px">'+lbl+' <span style="font-size:12px;color:#888;font-weight:400">('+lst.length+')</span></div>';
-    h+='<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">';
+    h+='<div class="card" style="border-top:3px solid #F15D1B">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    h+='<div style="font-weight:700;color:#4F5053;font-size:15px">'+lbl+' <span style="font-size:12px;color:#888;font-weight:400">('+lst.length+')</span></div>';
+    h+='<button class="btn sm" onclick="addF(\''+key+'\')">+ Adicionar</button></div>';
+    h+='<div style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:5px">';
     for(var i=0;i<lst.length;i++){
-      h+='<div style="display:flex;gap:6px"><input type="text" value="'+esc(lst[i])+'" onchange="editF(\''+key+'\','+i+',this.value)"><button class="btn sm" style="flex-shrink:0" onclick="rmvF(\''+key+'\','+i+')">&times;</button></div>';
+      h+='<div style="display:flex;gap:6px"><input type="text" value="'+esc(lst[i])+'" style="font-size:13px;padding:6px 8px" onchange="editF(\''+key+'\','+i+',this.value)">';
+      h+='<button class="btn sm" style="flex-shrink:0" onclick="rmvF(\''+key+'\','+i+')">&times;</button></div>';
     }
-    h+='</div><button class="btn sm" onclick="addF(\''+key+'\')">+ Adicionar</button></div>';
+    h+='</div></div>';
   }
   h+='</div>';
 
-  // Gestoras em busca + lista compacta
+  // Gestoras — busca + lista virtualizada
   var admins=S.funds.admins||[];
   var admQ=(S.admSearch||'').toLowerCase();
   var admFiltered=admQ?admins.filter(function(a){return a.toLowerCase().indexOf(admQ)>=0;}):admins;
+
   h+='<div class="card" style="border-top:3px solid #F15D1B">';
-  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
-  h+='<div style="font-weight:700;color:#4F5053;font-size:15px">Gestoras / Administradoras <span style="font-size:12px;color:#888;font-weight:400">('+admins.length+')</span></div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+  h+='<div style="font-weight:700;color:#4F5053;font-size:15px">Gestoras / Administradoras <span style="font-size:12px;color:#888;font-weight:400">('+admFiltered.length+'/'+admins.length+')</span></div>';
   h+='<button class="btn sm" onclick="addAdm()">+ Adicionar</button></div>';
-  h+='<input type="text" id="adm-search" placeholder="Buscar gestora..." style="margin-bottom:10px;font-size:13px;padding:6px 10px" value="'+esc(S.admSearch||'')+'" oninput="admSearch(this.value)">';
+  h+='<input type="text" id="adm-search" placeholder="Buscar gestora ou administradora..." style="margin-bottom:10px;font-size:13px;padding:6px 10px" value="'+esc(S.admSearch||'')+'" oninput="admSearch(this.value)">';
   h+='<div id="adm-new"></div>';
-  h+='<div style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">';
+
+  // Duas colunas com scroll
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:300px;overflow-y:auto">';
   for(var i=0;i<admFiltered.length;i++){
     var realIdx=admins.indexOf(admFiltered[i]);
-    h+='<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;background:#F7F7F7">';
-    h+='<span style="flex:1;font-size:13px">'+esc(admFiltered[i])+'</span>';
-    h+='<button class="btn sm" onclick="admEditInline('+realIdx+')" style="padding:2px 7px;font-size:12px">&#9998;</button>';
-    h+='<button onclick="rmvF(\'admins\','+realIdx+')" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:16px;padding:0 4px;line-height:1">&times;</button></div>';
+    h+='<div style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:6px;background:#F7F7F7">';
+    h+='<span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(admFiltered[i])+'">'+esc(admFiltered[i])+'</span>';
+    h+='<button class="btn sm" onclick="admEditInline('+realIdx+')" style="padding:1px 6px;font-size:11px;flex-shrink:0">&#9998;</button>';
+    h+='<button onclick="rmvF(\'admins\','+realIdx+')" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:14px;padding:0 2px;line-height:1;flex-shrink:0">&times;</button></div>';
   }
-  if(admFiltered.length===0)h+='<div style="color:#888;font-size:13px;padding:8px">Nenhuma gestora encontrada.</div>';
-  h+='</div></div>';
-  h+='<p style="font-size:13px;color:#626367;margin-top:1rem">Edite fundos diretamente. Salvo automaticamente.</p>';
+  if(admFiltered.length===0)h+='<div style="color:#888;font-size:13px;padding:8px;grid-column:span 2">Nenhuma gestora encontrada.</div>';
+  h+='</div>';
+  h+='<p style="font-size:11px;color:#aaa;margin-top:8px">'+admFiltered.length+' exibidas &middot; Salvo automaticamente.</p>';
+  h+='</div>';
   return h;
 }
 
