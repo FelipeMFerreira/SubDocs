@@ -157,7 +157,7 @@ var DF_FUNDS={investidor:DF_INV.slice(),investido:DF_IVD.slice(),admins:ADMINS_D
 
 // ─── STATE ────────────────────────────────────────────────
 var S={view:'orders',orders:[],funds:JSON.parse(JSON.stringify(DF_FUNDS)),onshore:[],docs:[],selId:null,showForm:false,focusStep:0,loading:true,filters:{fiv:'',tipo:'',status:''},editId:null,onSearch:'',onDetail:null,onEdit:null,onNew:false,docNew:false,docEdit:null,admNew:false,admSearch:''};
-var _ik=false,_saveTimer=null,_refreshTimer=null;
+var _ik=false,_saveTimer=null,_refreshTimer=null,_token=null;
 
 // ─── HELPERS ──────────────────────────────────────────────
 function lsLoad(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
@@ -201,23 +201,30 @@ document.getElementById('login-btn').onclick=function(){
     .then(function(r){return r.text();})
     .then(function(txt){
       var d=JSON.parse(txt);
-      if(d.success){currentUser=d.name;lsSave('sd_session',{user:currentUser,ts:Date.now()});showApp();btn.textContent='Entrar \u2192';btn.disabled=false;init();}
+      if(d.success){currentUser=d.name;_token=d.token;lsSave('sd_session',{user:currentUser,token:_token,ts:Date.now()});showApp();btn.textContent='Entrar \u2192';btn.disabled=false;init();}
       else{document.getElementById('login-err').style.display='block';document.getElementById('l-pass').value='';btn.textContent='Entrar \u2192';btn.disabled=false;}
     })
     .catch(function(){document.getElementById('login-err').innerHTML='Erro de conex\u00e3o.';document.getElementById('login-err').style.display='block';btn.textContent='Entrar \u2192';btn.disabled=false;});
 };
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none')document.getElementById('login-btn').onclick();});
-function logout(){lsSave('sd_session',null);currentUser=null;if(_refreshTimer){clearInterval(_refreshTimer);_refreshTimer=null;}showLogin();}
-(function(){var s=lsLoad('sd_session');if(s&&s.user&&(Date.now()-s.ts)<8*60*60*1000){currentUser=s.user;showApp();init();}})();
+function logout(){
+  if(_token){try{fetch(SCRIPT_URL+'?action=logout&token='+encodeURIComponent(_token)+'&t='+Date.now());}catch(e){}}
+  lsSave('sd_session',null);currentUser=null;_token=null;
+  if(_refreshTimer){clearInterval(_refreshTimer);_refreshTimer=null;}
+  showLogin();
+}
+(function(){var s=lsLoad('sd_session');if(s&&s.user&&s.token&&(Date.now()-s.ts)<8*60*60*1000){currentUser=s.user;_token=s.token;showApp();init();}})();
 
 // ─── DATA ─────────────────────────────────────────────────
 function init(){
   S.loading=true;
   if(_refreshTimer){clearInterval(_refreshTimer);_refreshTimer=null;}
-  fetch(SCRIPT_URL+'?action=getData&t='+Date.now())
+  fetch(SCRIPT_URL+'?action=getData&token='+encodeURIComponent(_token||'')+'&t='+Date.now())
     .then(function(r){return r.text();})
     .then(function(txt){
-      try{var d=JSON.parse(txt);S.orders=d.orders||[];S.funds=d.funds||JSON.parse(JSON.stringify(DF_FUNDS));if(!S.funds.admins||S.funds.admins.length===0)S.funds.admins=ADMINS_DEF.slice();S.onshore=d.onshore&&d.onshore.length?d.onshore:ON_DEFAULT.slice();S.docs=d.docs||[];}
+      try{var d=JSON.parse(txt);
+        if(d.error==='unauthorized'){logout();return;}
+        S.orders=d.orders||[];S.funds=d.funds||JSON.parse(JSON.stringify(DF_FUNDS));if(!S.funds.admins||S.funds.admins.length===0)S.funds.admins=ADMINS_DEF.slice();S.onshore=d.onshore&&d.onshore.length?d.onshore:ON_DEFAULT.slice();S.docs=d.docs||[];}
       catch(e){S.orders=lsLoad('sd_orders')||[];S.funds=lsLoad('sd_funds')||JSON.parse(JSON.stringify(DF_FUNDS));if(!S.funds.admins||!S.funds.admins.length)S.funds.admins=ADMINS_DEF.slice();S.onshore=lsLoad('sd_onshore')||ON_DEFAULT.slice();S.docs=lsLoad('sd_docs')||[];}
       S.loading=false;R();_refreshTimer=setInterval(autoRefresh,2000);
     })
@@ -225,16 +232,18 @@ function init(){
 }
 function autoRefresh(){
   if(S.showForm||S.editId||S.onNew||S.onEdit!==null||S.view==='onshore'||S.view==='docs'||S.view==='email'||S.view==='detail'||S.view==='funds'||S.view==='orders'||S.docNew||S.docEdit!==null)return;
-  fetch(SCRIPT_URL+'?action=getData&t='+Date.now())
+  fetch(SCRIPT_URL+'?action=getData&token='+encodeURIComponent(_token||'')+'&t='+Date.now())
     .then(function(r){return r.text();})
     .then(function(txt){
-      try{var d=JSON.parse(txt);var no=JSON.stringify(d.orders||[]);var nf=JSON.stringify(d.funds||{});var non=JSON.stringify(d.onshore||[]);
+      try{var d=JSON.parse(txt);
+        if(d.error==='unauthorized'){logout();return;}
+        var no=JSON.stringify(d.orders||[]);var nf=JSON.stringify(d.funds||{});var non=JSON.stringify(d.onshore||[]);
       if(no!==JSON.stringify(S.orders)||nf!==JSON.stringify(S.funds)||non!==JSON.stringify(S.onshore)){S.orders=d.orders||[];S.funds=d.funds||JSON.parse(JSON.stringify(DF_FUNDS));if(d.onshore&&d.onshore.length)S.onshore=d.onshore;R();}}catch(e){}
     }).catch(function(){});
 }
 function syncToSheet(type,data,attempt){
   attempt=attempt||0;
-  var body=JSON.stringify({type:type,data:JSON.stringify(data)});
+  var body=JSON.stringify({token:_token||'',type:type,data:JSON.stringify(data)});
   fetch(SCRIPT_URL,{
     method:'POST',
     mode:'no-cors',
