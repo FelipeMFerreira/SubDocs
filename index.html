@@ -166,7 +166,7 @@ var DF_IVD=['TERA HF SP','TERA CORE BONDS SP','TERA TREND FOLLOWING SP'];
 var DF_FUNDS={investidor:DF_INV.slice(),investido:DF_IVD.slice(),admins:ADMINS_DEF.slice()};
 
 // ─── STATE ────────────────────────────────────────────────
-var S={view:'home',placeholderTitle:'',orders:[],funds:JSON.parse(JSON.stringify(DF_FUNDS)),onshore:[],docs:[],wires:[],cotas:{config:[],entries:{},feriados:[]},cotasView:{startDate:null,filterOwner:'',filterAdm:'',search:''},cotasCell:null,wireDetail:null,wireEdit:null,wireNew:false,wireSearch:'',wireReveal:{},selId:null,showForm:false,focusStep:0,loading:true,filters:{fiv:'',tipo:'',status:''},editId:null,onSearch:'',onDetail:null,onEdit:null,onNew:false,docNew:false,docEdit:null,admNew:false,admSearch:''};
+var S={view:'home',placeholderTitle:'',orders:[],funds:JSON.parse(JSON.stringify(DF_FUNDS)),onshore:[],docs:[],wires:[],cotas:{config:[],entries:{},feriados:[],hiddenDates:[]},cotasView:{startDate:null,filterOwner:'',filterAdm:'',search:''},cotasCell:null,wireDetail:null,wireEdit:null,wireNew:false,wireSearch:'',wireReveal:{},selId:null,showForm:false,focusStep:0,loading:true,filters:{fiv:'',tipo:'',status:''},editId:null,onSearch:'',onDetail:null,onEdit:null,onNew:false,docNew:false,docEdit:null,admNew:false,admSearch:''};
 var _ik=false,_saveTimer=null,_refreshTimer=null,_token=null,_lastView=null;
 
 // ─── HELPERS ──────────────────────────────────────────────
@@ -236,11 +236,11 @@ function init(){
     .then(function(txt){
       try{var d=JSON.parse(txt);
         if(d.error==='unauthorized'){logout();return;}
-        S.orders=d.orders||[];S.funds=d.funds||JSON.parse(JSON.stringify(DF_FUNDS));if(!S.funds.admins||S.funds.admins.length===0)S.funds.admins=ADMINS_DEF.slice();S.onshore=d.onshore&&d.onshore.length?d.onshore:ON_DEFAULT.slice();S.docs=d.docs||[];S.wires=d.wires||[];S.cotas=d.cotas||{config:[],entries:{},feriados:[]};if(!S.cotas.config)S.cotas.config=[];if(!S.cotas.entries)S.cotas.entries={};if(!S.cotas.feriados)S.cotas.feriados=[];}
-      catch(e){S.orders=lsLoad('sd_orders')||[];S.funds=lsLoad('sd_funds')||JSON.parse(JSON.stringify(DF_FUNDS));if(!S.funds.admins||!S.funds.admins.length)S.funds.admins=ADMINS_DEF.slice();S.onshore=lsLoad('sd_onshore')||ON_DEFAULT.slice();S.docs=lsLoad('sd_docs')||[];S.wires=lsLoad('sd_wires')||[];S.cotas=lsLoad('sd_cotas')||{config:[],entries:{},feriados:[]};}
+        S.orders=d.orders||[];S.funds=d.funds||JSON.parse(JSON.stringify(DF_FUNDS));if(!S.funds.admins||S.funds.admins.length===0)S.funds.admins=ADMINS_DEF.slice();S.onshore=d.onshore&&d.onshore.length?d.onshore:ON_DEFAULT.slice();S.docs=d.docs||[];S.wires=d.wires||[];S.cotas=d.cotas||{config:[],entries:{},feriados:[],hiddenDates:[]};if(!S.cotas.config)S.cotas.config=[];if(!S.cotas.entries)S.cotas.entries={};if(!S.cotas.feriados)S.cotas.feriados=[];if(!S.cotas.hiddenDates)S.cotas.hiddenDates=[];}
+      catch(e){S.orders=lsLoad('sd_orders')||[];S.funds=lsLoad('sd_funds')||JSON.parse(JSON.stringify(DF_FUNDS));if(!S.funds.admins||!S.funds.admins.length)S.funds.admins=ADMINS_DEF.slice();S.onshore=lsLoad('sd_onshore')||ON_DEFAULT.slice();S.docs=lsLoad('sd_docs')||[];S.wires=lsLoad('sd_wires')||[];S.cotas=lsLoad('sd_cotas')||{config:[],entries:{},feriados:[],hiddenDates:[]};if(!S.cotas.hiddenDates)S.cotas.hiddenDates=[];}
       S.loading=false;R();_refreshTimer=setInterval(autoRefresh,2000);
     })
-    .catch(function(){      S.orders=lsLoad('sd_orders')||[];S.funds=lsLoad('sd_funds')||JSON.parse(JSON.stringify(DF_FUNDS));S.onshore=lsLoad('sd_onshore')||ON_DEFAULT.slice();S.docs=lsLoad('sd_docs')||[];S.wires=lsLoad('sd_wires')||[];S.cotas=lsLoad('sd_cotas')||{config:[],entries:{},feriados:[]};S.loading=false;R();_refreshTimer=setInterval(autoRefresh,2000);});
+    .catch(function(){      S.orders=lsLoad('sd_orders')||[];S.funds=lsLoad('sd_funds')||JSON.parse(JSON.stringify(DF_FUNDS));S.onshore=lsLoad('sd_onshore')||ON_DEFAULT.slice();S.docs=lsLoad('sd_docs')||[];S.wires=lsLoad('sd_wires')||[];S.cotas=lsLoad('sd_cotas')||{config:[],entries:{},feriados:[],hiddenDates:[]};if(!S.cotas.hiddenDates)S.cotas.hiddenDates=[];S.loading=false;R();_refreshTimer=setInterval(autoRefresh,2000);});
 }
 function autoRefresh(){
   if(S.showForm||S.editId||S.onNew||S.onEdit!==null||S.view==='home'||S.view==='placeholder'||S.view==='cotas'||S.view==='onshore'||S.view==='docs'||S.view==='email'||S.view==='detail'||S.view==='funds'||S.view==='orders'||S.view==='wires'||S.view==='insights'||S.docNew||S.docEdit!==null||S.wireNew||S.wireEdit!==null||S.wireDetail||S.cotasCell)return;
@@ -581,7 +581,6 @@ var COTAS_SEED=[
   {fundo:'VRB FIM',codigo:'INTRPATRIA62034',adm:'INTRAG',owner:'Weslley Alves'},
   {fundo:'VRB PREV FIM',codigo:'BNY12339',adm:'MELLON',owner:'Weslley Alves'},
   {fundo:'AVANTE FIM CP IE',codigo:'INTRPATRIA580',adm:'INTRAG',owner:'Livia Pieri'},
-  {fundo:'CORAL',codigo:'N/A',adm:'BTG',owner:'Livia Pieri'},
   {fundo:'DONOSTIA FIM CP IE',codigo:'INTRPATRIA578',adm:'INTRAG',owner:'Livia Pieri'},
   {fundo:'LIDIDU FIM CP',codigo:'INTRAG50450',adm:'BRADESCO',owner:'Livia Pieri'},
   {fundo:'LOREMA FIM CP IE',codigo:'INTRPATRIA577',adm:'INTRAG',owner:'Livia Pieri'},
@@ -605,7 +604,6 @@ var COTAS_HIST={
   'VRB FIM':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-10':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok'},
   'VRB PREV FIM':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-10':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok'},
   'AVANTE FIM CP IE':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'ok','2026-04-28':'ok','2026-04-29':'cobrei adm-30/04'},
-  'CORAL':{'2026-03-26':'cobrei adm- 27/03','2026-03-27':'cobrar adm','2026-04-01':'checar','2026-04-06':'Cobrei ADM - 07/04','2026-04-08':'cobrar adm','2026-04-29':'cobrei adm-30/04'},
   'DONOSTIA FIM CP IE':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'ok','2026-04-28':'ok','2026-04-29':'cobrei adm-30/04'},
   'LIDIDU FIM CP':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok_ arrumar RSPD11','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'cobrei adm-30/04','2026-04-28':'cobrei adm-30/04','2026-04-29':'cobrei adm-30/04'},
   'LOREMA FIM CP IE':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'ok','2026-04-28':'ok','2026-04-29':'cobrei adm-30/04'},
@@ -639,7 +637,7 @@ function cotasInferColor(text){
   var t=text.trim().toLowerCase();
   if(!t)return'gray';
   if(t.indexOf('pendente')===0)return'red';
-  if(t.indexOf('verificar')>=0||t.indexOf('checar')>=0||t.indexOf('cobrar')>=0)return'yellow';
+  if(t.indexOf('verificar')>=0||t.indexOf('checar')>=0||t.indexOf('cobrar')>=0||t.indexOf('cobrei')>=0)return'yellow';
   return'green';
 }
 
@@ -664,7 +662,21 @@ function cotasInit(){
   }
   // ja existe config: faz migracao aditiva (nao sobrescreve nada)
   var changed=false;
-  // (a) adiciona fundos do seed que ainda nao estao na config
+  // (a) MIGRACAO: remove CORAL (fundo encerrado)
+  var coralIdx=-1;
+  for(var ci=0;ci<S.cotas.config.length;ci++){
+    if(S.cotas.config[ci].fundo==='CORAL'){coralIdx=ci;break;}
+  }
+  if(coralIdx>=0){
+    var coralId=S.cotas.config[coralIdx].id;
+    S.cotas.config.splice(coralIdx,1);
+    // remove entries do CORAL
+    Object.keys(S.cotas.entries).forEach(function(k){
+      if(k.indexOf(coralId+'|')===0)delete S.cotas.entries[k];
+    });
+    changed=true;
+  }
+  // (b) adiciona fundos do seed que ainda nao estao na config
   var existingNames={};S.cotas.config.forEach(function(c){existingNames[c.fundo]=true;});
   COTAS_SEED.forEach(function(seed){
     if(!existingNames[seed.fundo]){
@@ -672,7 +684,7 @@ function cotasInit(){
       changed=true;
     }
   });
-  // (b) backfill de entries historicos APENAS pra chaves que nao existem
+  // (c) backfill de entries historicos APENAS pra chaves que nao existem
   var nameToId={};S.cotas.config.forEach(function(c){nameToId[c.fundo]=c.id;});
   Object.keys(COTAS_HIST).forEach(function(name){
     var id=nameToId[name];if(!id)return;
@@ -686,10 +698,20 @@ function cotasInit(){
       }
     });
   });
-  // (c) adiciona feriados conhecidos que faltam
+  // (d) adiciona feriados conhecidos que faltam
   if(!S.cotas.feriados)S.cotas.feriados=[];
   COTAS_FERIADOS_SEED.forEach(function(f){
     if(S.cotas.feriados.indexOf(f)<0){S.cotas.feriados.push(f);changed=true;}
+  });
+  // (e) MIGRACAO: re-classifica entries com "cobrei" que estao verdes -> amarelo
+  Object.keys(S.cotas.entries).forEach(function(k){
+    var e=S.cotas.entries[k];
+    if(!e||!e.t)return;
+    var txt=e.t.trim().toLowerCase();
+    if(e.c==='green'&&(txt.indexOf('cobrei')>=0||txt.indexOf('cobrar')>=0)){
+      e.c='yellow';
+      changed=true;
+    }
   });
   if(changed)saveCotas();
 }
@@ -713,14 +735,20 @@ function cotasIsBusinessDay(d){
   return true;
 }
 function cotasGetBusinessDays(weeks){
-  // retorna array de datas: ultimos N semanas + 2 semanas a frente, so dias uteis,
-  // em ordem cronologica crescente. Anchor = startDate (se navegou) ou hoje (BR).
-  // weeks=4 -> ~20 dias uteis no passado + ~10 dias uteis no futuro
-  var FUTURE_WEEKS=2;
+  // retorna array de datas: ultimos N semanas + 1 dia util a frente, so dias uteis,
+  // em ordem cronologica crescente. weeks=4 -> ~20 dias uteis no passado + 1 dia util futuro.
   var anchor=S.cotasView.startDate?cotasParseIso(S.cotasView.startDate):cotasTodayBR();
   anchor=new Date(anchor.getFullYear(),anchor.getMonth(),anchor.getDate());
   var begin=new Date(anchor);begin.setDate(begin.getDate()-(weeks*7-1));
-  var end=new Date(anchor);end.setDate(end.getDate()+FUTURE_WEEKS*7);
+  // calcula 1 dia util apos o anchor
+  var futureCursor=new Date(anchor);
+  futureCursor.setDate(futureCursor.getDate()+1);
+  while(!cotasIsBusinessDay(futureCursor)){
+    futureCursor.setDate(futureCursor.getDate()+1);
+    // safety: nao loopa mais que 14 dias
+    if((futureCursor-anchor)/(86400000)>14)break;
+  }
+  var end=futureCursor;
   var out=[];
   var cursor=new Date(begin);
   while(cursor<=end){
@@ -738,6 +766,63 @@ function cotasLastBusinessDay(){
     d.setDate(d.getDate()-1);
   }
   return cotasTodayBR();
+}
+
+// verifica se uma coluna (data) eh elegivel para ser escondida.
+// regra: SO permite esconder se TODAS as celulas com conteudo daquela data
+// estao verdes E o texto contem "ok" (com ou sem outras informacoes).
+// celulas vazias nao impedem.
+// retorna {eligible:bool, total:int, reason:string} para feedback ao user.
+function cotasColumnEligibleToHide(iso){
+  var fundos=S.cotas.config;
+  var total=0,nonGreen=0,noOk=0;
+  for(var i=0;i<fundos.length;i++){
+    var entry=cotasGetEntry(fundos[i].id,iso);
+    if(!entry||!entry.t||!entry.t.trim())continue; // vazias nao contam
+    total++;
+    if(entry.c!=='green'){nonGreen++;continue;}
+    var t=entry.t.trim().toLowerCase();
+    if(t.indexOf('ok')<0)noOk++;
+  }
+  if(total===0)return{eligible:false,total:0,reason:'Coluna vazia'};
+  if(nonGreen>0)return{eligible:false,total:total,reason:nonGreen+' c\u00e9lula(s) n\u00e3o-verde(s)'};
+  if(noOk>0)return{eligible:false,total:total,reason:noOk+' c\u00e9lula(s) sem "ok"'};
+  return{eligible:true,total:total,reason:''};
+}
+
+function cotasHideColumn(iso){
+  var info=cotasColumnEligibleToHide(iso);
+  if(!info.eligible){
+    alert('N\u00e3o \u00e9 poss\u00edvel ocultar esta coluna:\n\n'+info.reason+'\n\nApenas colunas onde todas as c\u00e9lulas est\u00e3o verdes e cont\u00eam "ok" podem ser ocultadas.');
+    return;
+  }
+  var d=cotasParseIso(iso);
+  var dateStr=cotasFmtDate(d)+'/'+iso.split('-')[0];
+  if(!confirm('Tem certeza que deseja ocultar a coluna do dia '+dateStr+'?\n\nOs dados continuam salvos e voc\u00ea pode trazer a coluna de volta a qualquer momento.'))return;
+  if(!S.cotas.hiddenDates)S.cotas.hiddenDates=[];
+  if(S.cotas.hiddenDates.indexOf(iso)<0)S.cotas.hiddenDates.push(iso);
+  saveCotas();R();
+}
+
+function cotasRestoreColumn(iso){
+  if(!S.cotas.hiddenDates)return;
+  S.cotas.hiddenDates=S.cotas.hiddenDates.filter(function(x){return x!==iso;});
+  saveCotas();R();
+}
+
+function cotasManageHidden(){
+  var hidden=(S.cotas.hiddenDates||[]).slice().sort();
+  if(hidden.length===0){
+    alert('Nenhuma coluna oculta no momento.');
+    return;
+  }
+  var dateStrs=hidden.map(function(iso){return cotasFmtDate(cotasParseIso(iso))+'/'+iso.split('-')[0];});
+  var msg='Colunas ocultas atualmente:\n\n'+dateStrs.map(function(d,i){return(i+1)+') '+d;}).join('\n')+'\n\nDigite o n\u00famero da coluna que deseja restaurar (ou cancele):';
+  var input=prompt(msg);
+  if(input===null)return;
+  var n=parseInt(input);
+  if(isNaN(n)||n<1||n>hidden.length){alert('N\u00famero inv\u00e1lido.');return;}
+  cotasRestoreColumn(hidden[n-1]);
 }
 function cotasEntryKey(fundoId,iso){return fundoId+'|'+iso;}
 function cotasGetEntry(fundoId,iso){
@@ -774,6 +859,11 @@ function cotasColorBorder(c){
 function vCotas(){
   cotasInit();
   var dates=cotasGetBusinessDays(4);
+  // filtra colunas escondidas
+  var hidden=S.cotas.hiddenDates||[];
+  if(hidden.length>0){
+    dates=dates.filter(function(d){return hidden.indexOf(cotasIso(d))<0;});
+  }
   var fundos=S.cotas.config.slice();
   // filtros
   var fOwner=S.cotasView.filterOwner||'';
@@ -809,6 +899,26 @@ function vCotas(){
   h+='<select class="ip" style="width:auto" onchange="S.cotasView.filterAdm=this.value;R();"><option value="">Todos os ADMs</option>';
   admsList.forEach(function(a){h+='<option value="'+esc(a)+'"'+(fAdm===a?' selected':'')+'>'+esc(a)+'</option>';});
   h+='</select>';
+
+  // dropdown "Excluir coluna" — lista datas passadas (anteriores a hoje) atualmente visiveis
+  var todayIsoH=cotasIso(cotasTodayBR());
+  var datesToHide=dates.filter(function(d){return cotasIso(d)<todayIsoH;});
+  h+='<select class="ip" style="width:auto" onchange="if(this.value){cotasHideColumn(this.value);this.value=\'\';}"><option value="">Excluir coluna</option>';
+  datesToHide.forEach(function(d){
+    var iso=cotasIso(d);
+    var info=cotasColumnEligibleToHide(iso);
+    var dStr=cotasFmtDate(d)+'/'+iso.split('-')[0];
+    var disabled=info.eligible?'':' disabled';
+    var hint=info.eligible?'':' \u2014 '+info.reason;
+    h+='<option value="'+iso+'"'+disabled+'>'+dStr+hint+'</option>';
+  });
+  h+='</select>';
+
+  // botao "Restaurar" se houver colunas escondidas
+  if((S.cotas.hiddenDates||[]).length>0){
+    h+='<button class="btn sm" onclick="cotasManageHidden()" title="Restaurar coluna oculta">Restaurar ('+S.cotas.hiddenDates.length+')</button>';
+  }
+
   if(fOwner||fAdm||fSearch){
     h+='<button class="btn sm" onclick="S.cotasView.filterOwner=\'\';S.cotasView.filterAdm=\'\';S.cotasView.search=\'\';R();">Limpar filtros</button>';
   }
