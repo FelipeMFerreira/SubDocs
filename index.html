@@ -11,6 +11,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#2
 .wrap{max-width:1100px;margin:0 auto;background:#fff;border-radius:12px;padding:1.5rem;min-height:100vh;border:1px solid #e0e0e0}
 .nav{display:flex;gap:6px;padding-bottom:12px;border-bottom:1px solid #ddd;margin-bottom:1.25rem;align-items:center;flex-wrap:wrap}
 .nb{background:none;border:none;padding:6px 16px;cursor:pointer;border-radius:8px;color:#626367;font-size:14px}
+.hub-card{background:#fff;border:1.5px solid #EAE7E3;border-radius:10px;padding:28px 16px;cursor:pointer;font-size:15px;font-weight:600;color:#2D2D2D;text-align:center;transition:all .15s ease;min-height:88px;display:flex;align-items:center;justify-content:center;font-family:inherit}
+.hub-card:hover{border-color:#F15D1B;color:#F15D1B;transform:translateY(-1px);box-shadow:0 2px 8px rgba(241,93,27,.08)}
 .nb.active{background:#4F5053;color:#fff;font-weight:600}
 .nb:hover:not(.active){background:#F7F7F7;color:#2D2D2D}
 .btn{padding:7px 16px;border:1px solid #ccc;background:#fff;border-radius:8px;cursor:pointer;font-size:14px;color:#2D2D2D}
@@ -151,7 +153,7 @@ var DF_IVD=['TERA HF SP','TERA CORE BONDS SP','TERA TREND FOLLOWING SP'];
 var DF_FUNDS={investidor:DF_INV.slice(),investido:DF_IVD.slice(),admins:ADMINS_DEF.slice()};
 
 // ─── STATE ────────────────────────────────────────────────
-var S={view:'orders',orders:[],funds:JSON.parse(JSON.stringify(DF_FUNDS)),onshore:[],docs:[],wires:[],wireDetail:null,wireEdit:null,wireNew:false,wireSearch:'',wireReveal:{},selId:null,showForm:false,focusStep:0,loading:true,filters:{fiv:'',tipo:'',status:''},editId:null,onSearch:'',onDetail:null,onEdit:null,onNew:false,docNew:false,docEdit:null,admNew:false,admSearch:''};
+var S={view:'home',placeholderTitle:'',orders:[],funds:JSON.parse(JSON.stringify(DF_FUNDS)),onshore:[],docs:[],wires:[],wireDetail:null,wireEdit:null,wireNew:false,wireSearch:'',wireReveal:{},selId:null,showForm:false,focusStep:0,loading:true,filters:{fiv:'',tipo:'',status:''},editId:null,onSearch:'',onDetail:null,onEdit:null,onNew:false,docNew:false,docEdit:null,admNew:false,admSearch:''};
 var _ik=false,_saveTimer=null,_refreshTimer=null,_token=null;
 
 // ─── HELPERS ──────────────────────────────────────────────
@@ -228,7 +230,7 @@ function init(){
     .catch(function(){      S.orders=lsLoad('sd_orders')||[];S.funds=lsLoad('sd_funds')||JSON.parse(JSON.stringify(DF_FUNDS));S.onshore=lsLoad('sd_onshore')||ON_DEFAULT.slice();S.docs=lsLoad('sd_docs')||[];S.wires=lsLoad('sd_wires')||[];S.loading=false;R();_refreshTimer=setInterval(autoRefresh,2000);});
 }
 function autoRefresh(){
-  if(S.showForm||S.editId||S.onNew||S.onEdit!==null||S.view==='onshore'||S.view==='docs'||S.view==='email'||S.view==='detail'||S.view==='funds'||S.view==='orders'||S.view==='wires'||S.docNew||S.docEdit!==null||S.wireNew||S.wireEdit!==null||S.wireDetail)return;
+  if(S.showForm||S.editId||S.onNew||S.onEdit!==null||S.view==='home'||S.view==='placeholder'||S.view==='onshore'||S.view==='docs'||S.view==='email'||S.view==='detail'||S.view==='funds'||S.view==='orders'||S.view==='wires'||S.view==='insights'||S.docNew||S.docEdit!==null||S.wireNew||S.wireEdit!==null||S.wireDetail)return;
   fetch(SCRIPT_URL+'?action=getData&token='+encodeURIComponent(_token||'')+'&t='+Date.now())
     .then(function(r){return r.text();})
     .then(function(txt){
@@ -433,21 +435,33 @@ function R(){
   var focusSel=document.activeElement&&document.activeElement.selectionStart!==undefined?document.activeElement.selectionStart:null;
 
   try{
-    var h='<div class="nav">'+LOGO(56,22);
-    h+='<button class="nb'+(S.view==='orders'?' active':'')+'" onclick="go(\'orders\')">Ordens</button>';
-    h+='<button class="nb'+(S.view==='onshore'?' active':'')+'" onclick="go(\'onshore\')">Base Onshore</button>';
-    h+='<button class="nb'+(S.view==='funds'?' active':'')+'" onclick="go(\'funds\')">Fundos</button>';
-    h+='<button class="nb'+(S.view==='docs'?' active':'')+'" onclick="go(\'docs\')">Documentos</button>';
-    h+='<button class="nb'+(S.view==='email'?' active':'')+'" onclick="go(\'email\')">E-mail</button>';
-    h+='<button class="nb'+(S.view==='wires'?' active':'')+'" onclick="go(\'wires\')">Wire Instructions</button>';
+    // mapeamento view -> label do breadcrumb
+    var viewLabels={
+      home:'Atividades',
+      orders:'SubDocs',detail:'SubDocs',
+      onshore:'Ve\u00edculos Internos',
+      funds:'Fundos',
+      docs:'Manuais',
+      email:'E-mail',
+      wires:'Wire Instructions',
+      insights:'Insights',
+      placeholder:S.placeholderTitle||'Em desenvolvimento'
+    };
+    var crumb=S.view==='home'?'Atividades':'<a onclick="go(\'home\')" style="color:#F15D1B;cursor:pointer;text-decoration:none">Atividades</a> <span style="color:#C5C0BB">\u203a</span> <span style="color:#2D2D2D">'+esc(viewLabels[S.view]||S.view)+'</span>';
+    var h='<div class="nav"><span style="cursor:pointer" onclick="go(\'home\')" title="Voltar ao in\u00edcio">'+LOGO(56,22)+'</span>';
+    h+='<div style="font-size:13px;font-weight:500;margin-left:6px">'+crumb+'</div>';
     h+='<div style="margin-left:auto;display:flex;align-items:center;gap:10px"><span style="font-size:13px;color:#626367">'+esc(currentUser||'')+'</span><button class="btn sm dr" onclick="logout()">Sair</button></div></div>';
-    if(S.view==='orders')h+=vOrders();
+    if(S.view==='home')h+=vHome();
+    else if(S.view==='orders')h+=vOrders();
     else if(S.view==='detail')h+=vDetail();
     else if(S.view==='onshore')h+=vOnshore();
     else if(S.view==='email')h+=vEmail();
     else if(S.view==='docs')h+=vDocs();
     else if(S.view==='wires')h+=vWires();
-    else h+=vFunds();
+    else if(S.view==='insights')h+=vInsights();
+    else if(S.view==='placeholder')h+=vPlaceholder();
+    else if(S.view==='funds')h+=vFunds();
+    else h+=vHome();
     root.innerHTML=h;
 
     // restaura foco
@@ -467,6 +481,304 @@ function R(){
       if(scrollPositions[sid]!==undefined)scrollElsAfter[sj].scrollTop=scrollPositions[sid];
     }
   }catch(err){root.innerHTML='<div style="padding:2rem;color:#c0392b;background:#FCEBEB;border-radius:8px;margin:1rem">Erro: '+err.message+'<br><br><button class="btn p" onclick="go(\'orders\')">Tentar novamente</button></div>';}
+}
+
+// ─── HOME / HUB ──────────────────────────────────────────
+function vHome(){
+  var h='<div style="max-width:1180px;margin:0 auto;padding:1.5rem 1rem">';
+  h+=hubSection('Atividades',[
+    {label:'SubDocs',action:"go('orders')"},
+    {label:'Capital Calls',action:"goPlaceholder('Capital Calls')"},
+    {label:'KYC/AML',action:"goPlaceholder('KYC/AML')"},
+    {label:'Eventos',action:"goPlaceholder('Eventos')"}
+  ]);
+  h+=hubSection('Controles',[
+    {label:'Rebate',action:"goPlaceholder('Rebate')"},
+    {label:'Cotas',action:"goPlaceholder('Cotas')"},
+    {label:'NAV',action:"goPlaceholder('NAV')"},
+    {label:'Passivo',action:"goPlaceholder('Passivo')"}
+  ]);
+  h+=hubSection('Informa\u00e7\u00f5es',[
+    {label:'Corretoras/Gestores',action:"goPlaceholder('Corretoras/Gestores')"},
+    {label:'Ve\u00edculos Externos',action:"goPlaceholder('Ve\u00edculos Externos')"},
+    {label:'Ve\u00edculos Internos',action:"go('onshore')"},
+    {label:'Fundos',action:"go('funds')"},
+    {label:'Wire Instructions',action:"go('wires')"},
+    {label:'E-mail',action:"go('email')"}
+  ]);
+  h+=hubSection('Documentos',[
+    {label:'Manuais',action:"go('docs')"}
+  ]);
+  h+='</div>';
+  return h;
+}
+function hubSection(title,cards){
+  var h='<div style="margin-bottom:2rem">';
+  h+='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#F15D1B;font-weight:700;margin-bottom:6px">'+esc(title)+'</div>';
+  h+='<div style="height:2px;background:#EAE7E3;margin-bottom:1rem"></div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">';
+  for(var i=0;i<cards.length;i++){
+    var c=cards[i];
+    h+='<button class="hub-card" onclick="'+c.action+'">'+esc(c.label)+'</button>';
+  }
+  h+='</div>';
+  h+='</div>';
+  return h;
+}
+function vPlaceholder(){
+  var t=S.placeholderTitle||'Em desenvolvimento';
+  var h='<div style="max-width:780px;margin:3rem auto;padding:0 1rem">';
+  h+='<div class="ca" style="padding:3rem 2rem;text-align:center">';
+  h+='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#F15D1B;font-weight:700;margin-bottom:8px">Em desenvolvimento</div>';
+  h+='<div style="font-size:22px;font-weight:700;color:#2D2D2D;margin-bottom:14px">'+esc(t)+'</div>';
+  h+='<div style="font-size:14px;color:#626367;line-height:1.6;margin-bottom:24px">Esta funcionalidade est\u00e1 em desenvolvimento e ser\u00e1 disponibilizada em breve.</div>';
+  h+='<button class="btn p" onclick="go(\'home\')">Voltar para Atividades</button>';
+  h+='</div></div>';
+  return h;
+}
+// ─── INSIGHTS ─────────────────────────────────────────────
+function vInsights(){
+  var orders=S.orders||[];
+  var now=Date.now();
+  var DAY=86400000;
+
+  // helpers
+  function fmtUSD(n){return n.toLocaleString('en-US',{maximumFractionDigits:0});}
+  function pctNum(o){return Math.round(o.steps.filter(function(s){return s.done;}).length/o.steps.length*100);}
+  function statusOf(o){var p=pctNum(o);return p===100?'concluida':p===0?'nao_iniciada':'em_andamento';}
+  function daysOpen(o){
+    if(!o.createdAt)return null;
+    return Math.floor((now-new Date(o.createdAt).getTime())/DAY);
+  }
+  function daysSinceUpdate(o){
+    var t=o.lastUpdatedAt||o.createdAt;
+    if(!t)return null;
+    return Math.floor((now-new Date(t).getTime())/DAY);
+  }
+
+  // bloco 1: pulse
+  var concl=orders.filter(function(o){return statusOf(o)==='concluida';}).length;
+  var andam=orders.filter(function(o){return statusOf(o)==='em_andamento';}).length;
+  var nada=orders.filter(function(o){return statusOf(o)==='nao_iniciada';}).length;
+  var paradas=orders.filter(function(o){
+    if(statusOf(o)==='concluida')return false;
+    var d=daysSinceUpdate(o);
+    return d!==null&&d>=3;
+  });
+
+  // wires urgentes (Subscription com wire em <=2 dias)
+  var wireUrg=orders.filter(function(o){
+    if(o.tipo==='Redemption'||!o.wire||statusOf(o)==='concluida')return false;
+    var wd=new Date(o.wire+'T00:00:00').getTime();
+    var diff=Math.round((wd-now)/DAY);
+    return diff>=0&&diff<=2;
+  });
+  var wireVenc=orders.filter(function(o){
+    if(o.tipo==='Redemption'||!o.wire||statusOf(o)==='concluida')return false;
+    var wd=new Date(o.wire+'T00:00:00').getTime();
+    return Math.round((wd-now)/DAY)<0;
+  });
+
+  // bloco distribuicao por tipo
+  var sub=orders.filter(function(o){return o.tipo==='Subscription';}).length;
+  var red=orders.filter(function(o){return o.tipo==='Redemption';}).length;
+
+  // bloco volume por moeda (somente em andamento + nao iniciada — ainda em pipeline)
+  var pipeline={};
+  orders.forEach(function(o){
+    if(statusOf(o)==='concluida')return;
+    var m=o.moeda||'USD';
+    if(!pipeline[m])pipeline[m]=0;
+    pipeline[m]+=parseFloat(o.valor)||0;
+  });
+
+  // bloco por gestora
+  var byGest={};
+  orders.forEach(function(o){
+    var g=o.gestora||'(sem gestora)';
+    if(!byGest[g])byGest[g]={total:0,andamento:0,concl:0};
+    byGest[g].total++;
+    if(statusOf(o)==='concluida')byGest[g].concl++;
+    else byGest[g].andamento++;
+  });
+  var gestList=Object.keys(byGest).map(function(g){return{nome:g,d:byGest[g]};});
+  gestList.sort(function(a,b){return b.d.total-a.d.total;});
+
+  // bloco por mes de criacao (ultimos 6 meses)
+  var months=[];
+  var monthMap={};
+  var d=new Date();d.setDate(1);
+  for(var k=0;k<6;k++){
+    var key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    months.unshift({key:key,label:d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}),sub:0,red:0});
+    monthMap[key]=months[0];
+    d.setMonth(d.getMonth()-1);
+  }
+  orders.forEach(function(o){
+    if(!o.createdAt)return;
+    var dt=new Date(o.createdAt);
+    var key=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
+    if(monthMap[key]){
+      if(o.tipo==='Redemption')monthMap[key].red++;
+      else monthMap[key].sub++;
+    }
+  });
+  var maxMonth=Math.max(1,months.reduce(function(a,m){return Math.max(a,m.sub+m.red);},0));
+
+  // bloco por usuario (a partir de createdBy/lastUpdatedBy)
+  var byUser={};
+  orders.forEach(function(o){
+    if(o.createdBy){if(!byUser[o.createdBy])byUser[o.createdBy]={criou:0,tocou:0};byUser[o.createdBy].criou++;}
+    if(o.lastUpdatedBy){if(!byUser[o.lastUpdatedBy])byUser[o.lastUpdatedBy]={criou:0,tocou:0};byUser[o.lastUpdatedBy].tocou++;}
+  });
+  var userList=Object.keys(byUser).map(function(u){return{nome:u,d:byUser[u]};});
+  userList.sort(function(a,b){return b.d.tocou-a.d.tocou;});
+
+  // ultima atividade por ordem (top 5)
+  var recent=orders.filter(function(o){return o.lastUpdatedAt||o.createdAt;}).slice();
+  recent.sort(function(a,b){
+    var ta=new Date(a.lastUpdatedAt||a.createdAt).getTime();
+    var tb=new Date(b.lastUpdatedAt||b.createdAt).getTime();
+    return tb-ta;
+  });
+  recent=recent.slice(0,8);
+
+  // ─── render ───
+  var h='<div class="ca" style="padding:1.5rem;margin-bottom:1rem">';
+  h+='<div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#F15D1B;font-weight:700;margin-bottom:2px">Insights</div>';
+  h+='<span style="font-weight:700;font-size:18px;color:#2D2D2D">Vis\u00e3o agregada da opera\u00e7\u00e3o</span>';
+  h+='<div style="font-size:12px;color:#626367;margin-top:4px">Total de '+orders.length+' ordens registradas no sistema</div>';
+  h+='</div>';
+
+  // PULSE
+  h+='<div class="ca" style="padding:1.25rem;margin-bottom:1rem">';
+  h+='<div style="font-weight:700;font-size:14px;color:#2D2D2D;margin-bottom:12px">Pulse \u2014 status agora</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">';
+  h+=insightCard('Em andamento',andam,'#F15D1B');
+  h+=insightCard('Conclu\u00eddas',concl,'#2D8A4E');
+  h+=insightCard('N\u00e3o iniciadas',nada,'#626367');
+  h+=insightCard('Wire vencendo',wireUrg.length,wireUrg.length>0?'#F15D1B':'#626367');
+  h+=insightCard('Wire vencida',wireVenc.length,wireVenc.length>0?'#C5363A':'#626367');
+  h+=insightCard('Paradas \u22653 dias',paradas.length,paradas.length>0?'#C5363A':'#626367');
+  h+='</div>';
+  if(paradas.length>0){
+    h+='<div style="margin-top:12px;padding:10px 14px;background:#FDEDED;border-left:3px solid #C5363A;border-radius:4px;font-size:12px;color:#7A2027">';
+    h+='<strong>'+paradas.length+' ordem(ns) sem atualiza\u00e7\u00e3o h\u00e1 3+ dias:</strong> ';
+    h+=paradas.slice(0,3).map(function(o){return esc(o.fi||'?')+' \u2192 '+esc(o.fiv||'?')+' ('+daysSinceUpdate(o)+'d)';}).join(' &middot; ');
+    if(paradas.length>3)h+=' &middot; e mais '+(paradas.length-3);
+    h+='</div>';
+  }
+  h+='</div>';
+
+  // VOLUME / MIX
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1rem">';
+  // pipeline por moeda
+  h+='<div class="ca" style="padding:1.25rem">';
+  h+='<div style="font-weight:700;font-size:14px;color:#2D2D2D;margin-bottom:12px">Pipeline em aberto</div>';
+  var pipKeys=Object.keys(pipeline);
+  if(pipKeys.length===0){h+='<div style="color:#626367;font-size:13px">Nenhuma ordem em pipeline.</div>';}
+  else{
+    pipKeys.forEach(function(m){
+      h+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EAE7E3"><span style="color:#626367;font-size:13px">'+esc(m)+'</span><span style="font-weight:700;font-family:monospace">'+fmtUSD(pipeline[m])+'</span></div>';
+    });
+  }
+  h+='</div>';
+  // mix Sub/Red
+  h+='<div class="ca" style="padding:1.25rem">';
+  h+='<div style="font-weight:700;font-size:14px;color:#2D2D2D;margin-bottom:12px">Mix Subscription vs Redemption</div>';
+  var totSubRed=sub+red;
+  if(totSubRed===0){h+='<div style="color:#626367;font-size:13px">Sem dados.</div>';}
+  else{
+    var pSub=Math.round(sub/totSubRed*100);
+    h+='<div style="display:flex;height:32px;border-radius:4px;overflow:hidden;margin-bottom:8px">';
+    if(sub>0)h+='<div style="background:#F15D1B;flex:'+sub+';display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:600">SUB '+pSub+'%</div>';
+    if(red>0)h+='<div style="background:#626367;flex:'+red+';display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:600">RED '+(100-pSub)+'%</div>';
+    h+='</div>';
+    h+='<div style="display:flex;justify-content:space-between;font-size:13px;color:#626367"><span>Subscription: <strong style="color:#2D2D2D">'+sub+'</strong></span><span>Redemption: <strong style="color:#2D2D2D">'+red+'</strong></span></div>';
+  }
+  h+='</div>';
+  h+='</div>';
+
+  // VOLUME POR MES
+  h+='<div class="ca" style="padding:1.25rem;margin-bottom:1rem">';
+  h+='<div style="font-weight:700;font-size:14px;color:#2D2D2D;margin-bottom:12px">Ordens criadas por m\u00eas (\u00faltimos 6 meses)</div>';
+  h+='<div style="display:flex;align-items:flex-end;gap:8px;height:140px;padding:8px 0;border-bottom:1px solid #EAE7E3">';
+  months.forEach(function(m){
+    var tot=m.sub+m.red;
+    var hpx=Math.round((tot/maxMonth)*120);
+    var subPx=tot>0?Math.round((m.sub/tot)*hpx):0;
+    var redPx=tot>0?hpx-subPx:0;
+    h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">';
+    h+='<div style="font-size:11px;color:#626367;font-weight:600">'+(tot||'')+'</div>';
+    h+='<div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:120px">';
+    if(redPx>0)h+='<div style="background:#626367;height:'+redPx+'px;border-radius:2px 2px 0 0"></div>';
+    if(subPx>0)h+='<div style="background:#F15D1B;height:'+subPx+'px;'+(redPx>0?'':'border-radius:2px 2px 0 0;')+'"></div>';
+    h+='</div>';
+    h+='<div style="font-size:11px;color:#626367">'+m.label+'</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  h+='<div style="display:flex;gap:16px;margin-top:8px;font-size:12px;color:#626367"><span><span style="display:inline-block;width:10px;height:10px;background:#F15D1B;border-radius:2px;vertical-align:middle"></span> Subscription</span><span><span style="display:inline-block;width:10px;height:10px;background:#626367;border-radius:2px;vertical-align:middle"></span> Redemption</span></div>';
+  h+='</div>';
+
+  // GESTORAS + USUARIOS lado a lado
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-bottom:1rem">';
+
+  // gestoras
+  h+='<div class="ca" style="padding:1.25rem">';
+  h+='<div style="font-weight:700;font-size:14px;color:#2D2D2D;margin-bottom:12px">Por gestora/admin (top 8)</div>';
+  if(gestList.length===0){h+='<div style="color:#626367;font-size:13px">Sem dados.</div>';}
+  else{
+    h+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    h+='<thead><tr style="text-align:left;color:#626367;border-bottom:1px solid #EAE7E3"><th style="padding:6px 0;font-weight:600">Gestora</th><th style="padding:6px 0;font-weight:600;text-align:right">Em andam.</th><th style="padding:6px 0;font-weight:600;text-align:right">Concl.</th><th style="padding:6px 0;font-weight:600;text-align:right">Total</th></tr></thead><tbody>';
+    gestList.slice(0,8).forEach(function(g){
+      h+='<tr style="border-bottom:1px solid #F5F3F1"><td style="padding:8px 0;color:#2D2D2D">'+esc(g.nome)+'</td><td style="padding:8px 0;text-align:right;color:'+(g.d.andamento>0?'#F15D1B':'#626367')+';font-weight:600">'+g.d.andamento+'</td><td style="padding:8px 0;text-align:right;color:#2D8A4E">'+g.d.concl+'</td><td style="padding:8px 0;text-align:right;font-weight:700">'+g.d.total+'</td></tr>';
+    });
+    h+='</tbody></table>';
+  }
+  h+='</div>';
+
+  // usuarios
+  h+='<div class="ca" style="padding:1.25rem">';
+  h+='<div style="font-weight:700;font-size:14px;color:#2D2D2D;margin-bottom:12px">Atividade por usu\u00e1rio</div>';
+  if(userList.length===0){h+='<div style="color:#626367;font-size:13px">Dados de usu\u00e1rio s\u00f3 ser\u00e3o registrados a partir das pr\u00f3ximas a\u00e7\u00f5es.</div>';}
+  else{
+    h+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    h+='<thead><tr style="text-align:left;color:#626367;border-bottom:1px solid #EAE7E3"><th style="padding:6px 0;font-weight:600">Usu\u00e1rio</th><th style="padding:6px 0;font-weight:600;text-align:right">Criou</th><th style="padding:6px 0;font-weight:600;text-align:right">\u00daltima a\u00e7\u00e3o</th></tr></thead><tbody>';
+    userList.forEach(function(u){
+      h+='<tr style="border-bottom:1px solid #F5F3F1"><td style="padding:8px 0;color:#2D2D2D">'+esc(u.nome)+'</td><td style="padding:8px 0;text-align:right;color:#2D2D2D">'+u.d.criou+'</td><td style="padding:8px 0;text-align:right;color:#F15D1B;font-weight:600">'+u.d.tocou+'</td></tr>';
+    });
+    h+='</tbody></table>';
+  }
+  h+='</div>';
+
+  h+='</div>';
+
+  // ATIVIDADE RECENTE
+  h+='<div class="ca" style="padding:1.25rem;margin-bottom:1rem">';
+  h+='<div style="font-weight:700;font-size:14px;color:#2D2D2D;margin-bottom:12px">Atividade recente</div>';
+  if(recent.length===0){h+='<div style="color:#626367;font-size:13px">Sem ordens.</div>';}
+  else{
+    h+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+    h+='<thead><tr style="text-align:left;color:#626367;border-bottom:1px solid #EAE7E3"><th style="padding:6px 0;font-weight:600">Ordem</th><th style="padding:6px 0;font-weight:600">Tipo</th><th style="padding:6px 0;font-weight:600">Status</th><th style="padding:6px 0;font-weight:600">\u00daltima atual.</th><th style="padding:6px 0;font-weight:600">Por</th></tr></thead><tbody>';
+    recent.forEach(function(o){
+      var st=statusOf(o);var stLbl=st==='concluida'?'Conclu\u00edda':st==='em_andamento'?'Em andam.':'N\u00e3o iniciada';
+      var stColor=st==='concluida'?'#2D8A4E':st==='em_andamento'?'#F15D1B':'#626367';
+      var t=o.lastUpdatedAt||o.createdAt;
+      var dStr=t?new Date(t).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'\u2014';
+      h+='<tr style="border-bottom:1px solid #F5F3F1;cursor:pointer" onclick="openDet(\''+esc(o.id)+'\')" onmouseover="this.style.background=\'#FAFAFA\'" onmouseout="this.style.background=\'\'"><td style="padding:8px 0;color:#2D2D2D">'+esc(o.fi||'?')+' \u2192 '+esc(o.fiv||'?')+'</td><td style="padding:8px 0;color:#626367">'+esc(o.tipo||'\u2014')+'</td><td style="padding:8px 0;color:'+stColor+';font-weight:600">'+stLbl+'</td><td style="padding:8px 0;color:#626367">'+dStr+'</td><td style="padding:8px 0;color:#626367">'+esc(o.lastUpdatedBy||o.createdBy||'\u2014')+'</td></tr>';
+    });
+    h+='</tbody></table>';
+  }
+  h+='</div>';
+
+  // nota explicativa sobre dados nao disponiveis ainda
+  h+='<div class="ca" style="padding:1rem 1.25rem;margin-bottom:1rem;background:#FAFAFA"><div style="font-size:12px;color:#626367;line-height:1.6"><strong style="color:#2D2D2D">Nota:</strong> A partir de agora, o sistema registra <em>quem criou cada ordem</em> e <em>quando foi a \u00faltima altera\u00e7\u00e3o</em>. Ordens criadas antes desta atualiza\u00e7\u00e3o n\u00e3o ter\u00e3o esses dados. M\u00e9tricas como "tempo m\u00e9dio entre etapas" e "gargalo por step" exigem timestamps por etapa, que n\u00e3o est\u00e3o sendo coletados nesta fase.</div></div>';
+
+  return h;
+}
+function insightCard(label,value,color){
+  return '<div style="padding:14px;background:#FAFAFA;border-radius:6px;border-left:3px solid '+color+'"><div style="font-size:11px;color:#626367;text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:4px">'+label+'</div><div style="font-size:24px;font-weight:700;color:'+color+'">'+value+'</div></div>';
 }
 
 // ─── WIRE INSTRUCTIONS ────────────────────────────────────
@@ -965,7 +1277,8 @@ function vFunds(){
 }
 
 // ─── ACTIONS ──────────────────────────────────────────────
-function go(v){S.view=v;S.showForm=false;S.editId=null;S.onDetail=null;S.onEdit=null;S.onNew=false;S.wireDetail=null;S.wireEdit=null;S.wireNew=false;S.wireSearch='';S.wireReveal={};R();}
+function go(v){S.view=v;S.showForm=false;S.editId=null;S.onDetail=null;S.onEdit=null;S.onNew=false;S.wireDetail=null;S.wireEdit=null;S.wireNew=false;S.wireSearch='';S.wireReveal={};S.placeholderTitle='';R();}
+function goPlaceholder(title){S.view='placeholder';S.placeholderTitle=title;R();}
 function setFilter(k,v){S.filters[k]=v;R();}
 function clearFilters(){S.filters={fiv:'',tipo:'',status:''};R();}
 function openDet(id){S.selId=id;S.view='detail';S.editId=null;var o=null;for(var i=0;i<S.orders.length;i++){if(S.orders[i].id===id){o=S.orders[i];break;}}if(o){var idx=-1;for(var j=0;j<o.steps.length;j++){if(!o.steps[j].done){idx=j;break;}}S.focusStep=idx<0?0:idx;}R();}
@@ -980,11 +1293,12 @@ function createOrd(){
   var ik=_ik;var moe=document.getElementById('f-moe');
   var tp=document.getElementById('f-tipo').value;
   var ST=tp==='Redemption'?STEPS_RED:STEPS_SUB;
-  var o={id:uid(),fi:document.getElementById('f-fi').value,fiv:document.getElementById('f-fiv').value,gestora:document.getElementById('f-gest').value.trim(),tipo:tp,valor:parseFloat(document.getElementById('f-val').value)||0,moeda:ik?'SHARES':(moe?moe.value:'USD'),wire:document.getElementById('f-wire').value||null,inKind:ik,valorConfirmado:null,steps:ST.map(function(){return{done:false,obs:''};},this),createdAt:new Date().toISOString()};
+  var now=new Date().toISOString();
+  var o={id:uid(),fi:document.getElementById('f-fi').value,fiv:document.getElementById('f-fiv').value,gestora:document.getElementById('f-gest').value.trim(),tipo:tp,valor:parseFloat(document.getElementById('f-val').value)||0,moeda:ik?'SHARES':(moe?moe.value:'USD'),wire:document.getElementById('f-wire').value||null,inKind:ik,valorConfirmado:null,steps:ST.map(function(){return{done:false,obs:''};},this),createdAt:now,createdBy:currentUser||'',lastUpdatedAt:now,lastUpdatedBy:currentUser||''};
   S.orders.unshift(o);S.showForm=false;saveO();R();
 }
 function saveEditOrd(id){
-  for(var i=0;i<S.orders.length;i++){if(S.orders[i].id===id){var o=S.orders[i];o.fi=document.getElementById('f-fi').value;o.fiv=document.getElementById('f-fiv').value;o.gestora=document.getElementById('f-gest').value.trim();o.tipo=document.getElementById('f-tipo').value;o.valor=parseFloat(document.getElementById('f-val').value)||0;var moe=document.getElementById('f-moe');o.moeda=o.inKind?'SHARES':(moe?moe.value:'USD');o.wire=document.getElementById('f-wire').value||null;break;}}
+  for(var i=0;i<S.orders.length;i++){if(S.orders[i].id===id){var o=S.orders[i];o.fi=document.getElementById('f-fi').value;o.fiv=document.getElementById('f-fiv').value;o.gestora=document.getElementById('f-gest').value.trim();o.tipo=document.getElementById('f-tipo').value;o.valor=parseFloat(document.getElementById('f-val').value)||0;var moe=document.getElementById('f-moe');o.moeda=o.inKind?'SHARES':(moe?moe.value:'USD');o.wire=document.getElementById('f-wire').value||null;o.lastUpdatedAt=new Date().toISOString();o.lastUpdatedBy=currentUser||'';break;}}
   S.editId=null;saveO();R();
 }
 function delOrd(id){S.orders=S.orders.filter(function(o){return o.id!==id;});S.view='orders';S.editId=null;saveO();R();}
@@ -992,6 +1306,8 @@ function togStep(id,idx,val){
   for(var i=0;i<S.orders.length;i++){
     if(S.orders[i].id===id){
       S.orders[i].steps[idx].done=val;
+      S.orders[i].lastUpdatedAt=new Date().toISOString();
+      S.orders[i].lastUpdatedBy=currentUser||'';
       if(val){
         var next=idx+1;
         if(next<S.orders[i].steps.length) S.focusStep=next;
