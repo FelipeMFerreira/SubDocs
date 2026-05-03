@@ -11,8 +11,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#2
 .wrap{max-width:1100px;margin:0 auto;background:#fff;border-radius:12px;padding:1.5rem;min-height:100vh;border:1px solid #e0e0e0}
 .nav{display:flex;gap:6px;padding-bottom:12px;border-bottom:1px solid #ddd;margin-bottom:1.25rem;align-items:center;flex-wrap:wrap}
 .nb{background:none;border:none;padding:6px 16px;cursor:pointer;border-radius:8px;color:#626367;font-size:14px}
-.hub-card{background:#fff;border:1.5px solid #EAE7E3;border-radius:10px;padding:28px 16px;cursor:pointer;font-size:15px;font-weight:600;color:#2D2D2D;text-align:center;transition:all .15s ease;min-height:88px;display:flex;align-items:center;justify-content:center;font-family:inherit}
-.hub-card:hover{border-color:#F15D1B;color:#F15D1B;transform:translateY(-1px);box-shadow:0 2px 8px rgba(241,93,27,.08)}
+.hub-card{background:#FCE5D4;border:1.5px solid #F8C9A6;border-radius:12px;padding:22px 14px;cursor:pointer;font-size:14.5px;font-weight:600;color:#7A3C10;text-align:center;transition:all .15s ease;min-height:78px;display:flex;align-items:center;justify-content:center;font-family:inherit;will-change:transform,opacity}
+.hub-card:hover{background:#F8C9A6;border-color:#F15D1B;color:#7A3C10;transform:translateY(-1px);box-shadow:0 4px 12px rgba(241,93,27,.15)}
+.hub-card.disabled{background:#F0EEEC;border-color:#DDD8D2;color:#9A958F;cursor:pointer}
+.hub-card.disabled:hover{background:#E5E1DC;border-color:#C5C0BB;color:#7A756F;transform:none;box-shadow:none}
+.hub-card.opening{animation:hubOpenAnim .28s cubic-bezier(.32,.72,.4,1) forwards;pointer-events:none;z-index:50}
+@keyframes hubOpenAnim{
+  0%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.06);opacity:1;box-shadow:0 8px 24px rgba(241,93,27,.25)}
+  100%{transform:scale(1.4);opacity:0}
+}
+.page-enter{animation:pageEnter .26s cubic-bezier(.32,.72,.4,1) forwards}
+@keyframes pageEnter{
+  0%{transform:scale(.96);opacity:0}
+  100%{transform:scale(1);opacity:1}
+}
 .nb.active{background:#4F5053;color:#fff;font-weight:600}
 .nb:hover:not(.active){background:#F7F7F7;color:#2D2D2D}
 .btn{padding:7px 16px;border:1px solid #ccc;background:#fff;border-radius:8px;cursor:pointer;font-size:14px;color:#2D2D2D}
@@ -154,7 +167,7 @@ var DF_FUNDS={investidor:DF_INV.slice(),investido:DF_IVD.slice(),admins:ADMINS_D
 
 // ─── STATE ────────────────────────────────────────────────
 var S={view:'home',placeholderTitle:'',orders:[],funds:JSON.parse(JSON.stringify(DF_FUNDS)),onshore:[],docs:[],wires:[],wireDetail:null,wireEdit:null,wireNew:false,wireSearch:'',wireReveal:{},selId:null,showForm:false,focusStep:0,loading:true,filters:{fiv:'',tipo:'',status:''},editId:null,onSearch:'',onDetail:null,onEdit:null,onNew:false,docNew:false,docEdit:null,admNew:false,admSearch:''};
-var _ik=false,_saveTimer=null,_refreshTimer=null,_token=null;
+var _ik=false,_saveTimer=null,_refreshTimer=null,_token=null,_lastView=null;
 
 // ─── HELPERS ──────────────────────────────────────────────
 function lsLoad(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
@@ -447,21 +460,27 @@ function R(){
       insights:'Insights',
       placeholder:S.placeholderTitle||'Em desenvolvimento'
     };
-    var crumb=S.view==='home'?'Atividades':'<a onclick="go(\'home\')" style="color:#F15D1B;cursor:pointer;text-decoration:none">Atividades</a> <span style="color:#C5C0BB">\u203a</span> <span style="color:#2D2D2D">'+esc(viewLabels[S.view]||S.view)+'</span>';
+    var crumb=S.view==='home'?'Dashboard de Opera\u00e7\u00f5es':'<a onclick="go(\'home\')" style="color:#F15D1B;cursor:pointer;text-decoration:none">Dashboard de Opera\u00e7\u00f5es</a> <span style="color:#C5C0BB">\u203a</span> <span style="color:#2D2D2D">'+esc(viewLabels[S.view]||S.view)+'</span>';
     var h='<div class="nav"><span style="cursor:pointer" onclick="go(\'home\')" title="Voltar ao in\u00edcio">'+LOGO(56,22)+'</span>';
     h+='<div style="font-size:13px;font-weight:500;margin-left:6px">'+crumb+'</div>';
     h+='<div style="margin-left:auto;display:flex;align-items:center;gap:10px"><span style="font-size:13px;color:#626367">'+esc(currentUser||'')+'</span><button class="btn sm dr" onclick="logout()">Sair</button></div></div>';
     if(S.view==='home')h+=vHome();
-    else if(S.view==='orders')h+=vOrders();
-    else if(S.view==='detail')h+=vDetail();
-    else if(S.view==='onshore')h+=vOnshore();
-    else if(S.view==='email')h+=vEmail();
-    else if(S.view==='docs')h+=vDocs();
-    else if(S.view==='wires')h+=vWires();
-    else if(S.view==='insights')h+=vInsights();
-    else if(S.view==='placeholder')h+=vPlaceholder();
-    else if(S.view==='funds')h+=vFunds();
-    else h+=vHome();
+    else{
+      var inner='';
+      if(S.view==='orders')inner=vOrders();
+      else if(S.view==='detail')inner=vDetail();
+      else if(S.view==='onshore')inner=vOnshore();
+      else if(S.view==='email')inner=vEmail();
+      else if(S.view==='docs')inner=vDocs();
+      else if(S.view==='wires')inner=vWires();
+      else if(S.view==='insights')inner=vInsights();
+      else if(S.view==='placeholder')inner=vPlaceholder();
+      else if(S.view==='funds')inner=vFunds();
+      else inner=vHome();
+      var cls=(S.view!==_lastView)?'page-enter':'';
+      h+='<div class="'+cls+'">'+inner+'</div>';
+    }
+    _lastView=S.view;
     root.innerHTML=h;
 
     // restaura foco
@@ -485,22 +504,22 @@ function R(){
 
 // ─── HOME / HUB ──────────────────────────────────────────
 function vHome(){
-  var h='<div style="max-width:1180px;margin:0 auto;padding:1.5rem 1rem">';
+  var h='<div style="max-width:1080px;margin:0 auto;padding:1.5rem 1rem">';
   h+=hubSection('Atividades',[
     {label:'SubDocs',action:"go('orders')"},
-    {label:'Capital Calls',action:"goPlaceholder('Capital Calls')"},
-    {label:'KYC/AML',action:"goPlaceholder('KYC/AML')"},
-    {label:'Eventos',action:"goPlaceholder('Eventos')"}
+    {label:'Capital Calls',disabled:true},
+    {label:'KYC/AML',disabled:true},
+    {label:'Eventos',disabled:true}
   ]);
   h+=hubSection('Controles',[
-    {label:'Rebate',action:"goPlaceholder('Rebate')"},
-    {label:'Cotas',action:"goPlaceholder('Cotas')"},
-    {label:'NAV',action:"goPlaceholder('NAV')"},
-    {label:'Passivo',action:"goPlaceholder('Passivo')"}
+    {label:'Rebate',disabled:true},
+    {label:'Cotas',disabled:true},
+    {label:'NAV',disabled:true},
+    {label:'Passivo',disabled:true}
   ]);
   h+=hubSection('Informa\u00e7\u00f5es',[
-    {label:'Corretoras/Gestores',action:"goPlaceholder('Corretoras/Gestores')"},
-    {label:'Ve\u00edculos Externos',action:"goPlaceholder('Ve\u00edculos Externos')"},
+    {label:'Corretoras/Gestores',disabled:true},
+    {label:'Ve\u00edculos Externos',disabled:true},
     {label:'Ve\u00edculos Internos',action:"go('onshore')"},
     {label:'Fundos',action:"go('funds')"},
     {label:'Wire Instructions',action:"go('wires')"},
@@ -513,26 +532,39 @@ function vHome(){
   return h;
 }
 function hubSection(title,cards){
-  var h='<div style="margin-bottom:2rem">';
-  h+='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#F15D1B;font-weight:700;margin-bottom:6px">'+esc(title)+'</div>';
-  h+='<div style="height:2px;background:#EAE7E3;margin-bottom:1rem"></div>';
-  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">';
+  var h='<div style="margin-bottom:2.25rem">';
+  h+='<div style="font-size:18px;letter-spacing:.04em;text-transform:uppercase;color:#F15D1B;font-weight:800;margin-bottom:8px">'+esc(title)+'</div>';
+  h+='<div style="height:2px;background:#EAE7E3;margin-bottom:1.1rem"></div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px">';
   for(var i=0;i<cards.length;i++){
     var c=cards[i];
-    h+='<button class="hub-card" onclick="'+c.action+'">'+esc(c.label)+'</button>';
+    var labelEsc=esc(c.label).replace(/'/g,"&#39;");
+    if(c.disabled){
+      h+='<button class="hub-card disabled" onclick="goPlaceholder(\''+labelEsc+'\')" title="Em desenvolvimento">'+esc(c.label)+'</button>';
+    }else{
+      h+='<button class="hub-card" onclick="hubOpen(this,&quot;'+c.action.replace(/"/g,'&quot;').replace(/'/g,'\\\'')+'&quot;)">'+esc(c.label)+'</button>';
+    }
   }
   h+='</div>';
   h+='</div>';
   return h;
 }
+// animacao de "abertura" tipo iOS — o card expande visualmente e depois navega
+function hubOpen(btn,action){
+  if(btn.classList.contains('opening'))return;
+  btn.classList.add('opening');
+  setTimeout(function(){
+    try{eval(action);}catch(e){go('home');}
+  },280);
+}
 function vPlaceholder(){
   var t=S.placeholderTitle||'Em desenvolvimento';
-  var h='<div style="max-width:780px;margin:3rem auto;padding:0 1rem">';
+  var h='<div style="max-width:780px;margin:3rem auto;padding:0 1rem" class="page-enter">';
   h+='<div class="ca" style="padding:3rem 2rem;text-align:center">';
   h+='<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#F15D1B;font-weight:700;margin-bottom:8px">Em desenvolvimento</div>';
   h+='<div style="font-size:22px;font-weight:700;color:#2D2D2D;margin-bottom:14px">'+esc(t)+'</div>';
   h+='<div style="font-size:14px;color:#626367;line-height:1.6;margin-bottom:24px">Esta funcionalidade est\u00e1 em desenvolvimento e ser\u00e1 disponibilizada em breve.</div>';
-  h+='<button class="btn p" onclick="go(\'home\')">Voltar para Atividades</button>';
+  h+='<button class="btn p" onclick="go(\'home\')">Voltar ao Dashboard</button>';
   h+='</div></div>';
   return h;
 }
