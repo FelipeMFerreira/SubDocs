@@ -166,7 +166,7 @@ var DF_IVD=['TERA HF SP','TERA CORE BONDS SP','TERA TREND FOLLOWING SP'];
 var DF_FUNDS={investidor:DF_INV.slice(),investido:DF_IVD.slice(),admins:ADMINS_DEF.slice()};
 
 // ─── STATE ────────────────────────────────────────────────
-var S={view:'home',placeholderTitle:'',orders:[],funds:JSON.parse(JSON.stringify(DF_FUNDS)),onshore:[],docs:[],wires:[],cotas:{config:[],entries:{},feriados:[],hiddenDates:[]},cotasView:{startDate:null,filterOwner:'',filterAdm:'',search:''},cotasCell:null,wireDetail:null,wireEdit:null,wireNew:false,wireSearch:'',wireReveal:{},selId:null,showForm:false,focusStep:0,loading:true,filters:{fiv:'',tipo:'',status:''},editId:null,onSearch:'',onDetail:null,onEdit:null,onNew:false,docNew:false,docEdit:null,admNew:false,admSearch:''};
+var S={view:'home',placeholderTitle:'',orders:[],funds:JSON.parse(JSON.stringify(DF_FUNDS)),onshore:[],docs:[],wires:[],cotas:{config:[],entries:{},feriados:[],hiddenDates:[]},cotasView:{startDate:null,filterOwner:'',filterAdm:'',search:''},cotasCell:null,cotasSelected:null,wireDetail:null,wireEdit:null,wireNew:false,wireSearch:'',wireReveal:{},selId:null,showForm:false,focusStep:0,loading:true,filters:{fiv:'',tipo:'',status:''},editId:null,onSearch:'',onDetail:null,onEdit:null,onNew:false,docNew:false,docEdit:null,admNew:false,admSearch:''};
 var _ik=false,_saveTimer=null,_refreshTimer=null,_token=null,_lastView=null;
 
 // ─── HELPERS ──────────────────────────────────────────────
@@ -824,6 +824,24 @@ function cotasManageHidden(){
   if(isNaN(n)||n<1||n>hidden.length){alert('N\u00famero inv\u00e1lido.');return;}
   cotasRestoreColumn(hidden[n-1]);
 }
+
+// listener global pra teclas Delete/Backspace/Esc na view de Cotas (multi-select)
+(function(){
+  document.addEventListener('keydown',function(e){
+    if(S.view!=='cotas')return;
+    if(S.cotasCell)return;
+    if(!S.cotasSelected||S.cotasSelected.length===0)return;
+    var tag=(e.target.tagName||'').toLowerCase();
+    if(tag==='input'||tag==='textarea'||tag==='select')return;
+    if(e.key==='Delete'||e.key==='Backspace'){
+      e.preventDefault();
+      cotasClearSelected();
+    }else if(e.key==='Escape'){
+      e.preventDefault();
+      cotasClearSelection();
+    }
+  });
+})();
 function cotasEntryKey(fundoId,iso){return fundoId+'|'+iso;}
 function cotasGetEntry(fundoId,iso){
   return S.cotas.entries[cotasEntryKey(fundoId,iso)]||null;
@@ -882,7 +900,7 @@ function vCotas(){
   var h='<div class="ca" style="padding:1.25rem;margin-bottom:1rem">';
   // cabecalho
   h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;gap:10px;flex-wrap:wrap">';
-  h+='<div><div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#F15D1B;font-weight:700">Cotas</div><span style="font-weight:700;font-size:18px;color:#2D2D2D">Batimento di\u00e1rio de cotas</span><div style="font-size:12px;color:#626367;margin-top:4px">'+fundos.length+' fundo'+(fundos.length===1?'':'s')+' &middot; '+dates.length+' dias \u00fateis</div></div>';
+  h+='<div><div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#F15D1B;font-weight:700">Cotas</div><span style="font-weight:700;font-size:18px;color:#2D2D2D">Batimento di\u00e1rio de cotas</span><div style="font-size:12px;color:#626367;margin-top:4px">'+fundos.length+' fundo'+(fundos.length===1?'':'s')+'</div></div>';
   h+='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
   h+='<button class="btn sm" onclick="cotasNavDate(-7)" title="Semana anterior">\u00ab</button>';
   h+='<button class="btn sm" onclick="cotasNavDate(0)">Hoje</button>';
@@ -903,7 +921,7 @@ function vCotas(){
   // dropdown "Excluir coluna" — lista datas passadas (anteriores a hoje) atualmente visiveis
   var todayIsoH=cotasIso(cotasTodayBR());
   var datesToHide=dates.filter(function(d){return cotasIso(d)<todayIsoH;});
-  h+='<select class="ip" style="width:auto;font-size:12px;padding:5px 8px" onchange="if(this.value){cotasHideColumn(this.value);this.value=\'\';}"><option value="">Excluir coluna</option>';
+  h+='<select class="ip" style="width:auto" onchange="if(this.value){cotasHideColumn(this.value);this.value=\'\';}"><option value="">Excluir coluna</option>';
   datesToHide.forEach(function(d){
     var iso=cotasIso(d);
     var info=cotasColumnEligibleToHide(iso);
@@ -916,13 +934,22 @@ function vCotas(){
 
   // botao "Restaurar" se houver colunas escondidas
   if((S.cotas.hiddenDates||[]).length>0){
-    h+='<button class="btn sm" style="font-size:12px;padding:5px 10px" onclick="cotasManageHidden()" title="Restaurar coluna oculta">Restaurar ('+S.cotas.hiddenDates.length+')</button>';
+    h+='<button class="btn sm" onclick="cotasManageHidden()" title="Restaurar coluna oculta">Restaurar ('+S.cotas.hiddenDates.length+')</button>';
   }
 
   if(fOwner||fAdm||fSearch){
     h+='<button class="btn sm" onclick="S.cotasView.filterOwner=\'\';S.cotasView.filterAdm=\'\';S.cotasView.search=\'\';R();">Limpar filtros</button>';
   }
   h+='</div>';
+
+  // barra de selecao multipla (visivel quando ha celulas selecionadas via Ctrl+click)
+  if(S.cotasSelected&&S.cotasSelected.length>0){
+    h+='<div style="background:#FEF3EC;border:1px solid #F8C9A6;border-radius:6px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
+    h+='<span style="font-size:13px;color:#7A3C10;font-weight:600">'+S.cotasSelected.length+' c\u00e9lula(s) selecionada(s)</span>';
+    h+='<span style="font-size:12px;color:#9A958F">Ctrl/Cmd+clique para selecionar mais &middot; Delete para limpar conte\u00fado &middot; Esc para cancelar</span>';
+    h+='<div style="margin-left:auto;display:flex;gap:6px"><button class="btn sm dr" onclick="cotasClearSelected()">Limpar conte\u00fado</button><button class="btn sm" onclick="cotasClearSelection()">Cancelar</button></div>';
+    h+='</div>';
+  }
 
   // tabela
   h+='<div id="cotas-scroll" style="overflow-x:auto;border:1px solid #EAE7E3;border-radius:6px;user-select:none">';
@@ -960,7 +987,10 @@ function vCotas(){
         var bd=entry?cotasColorBorder(entry.c):'#EAE7E3';
         var label=entry?(entry.t||(entry.c==='green'?'ok':entry.c==='yellow'?'!':entry.c==='red'?'X':'')):'';
         var titleAttr=entry&&entry.t?' title="'+esc(entry.t)+'"':'';
-        h+='<td style="padding:2px;text-align:center;border-left:1px solid #F5F3F1"><div onclick="cotasOpenCell(\''+esc(f.id)+'\',\''+iso+'\')" style="background:'+bg+';color:'+fg+';border:1px solid '+bd+';border-radius:4px;padding:6px 4px;cursor:pointer;font-size:11px;line-height:1.3;min-height:28px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"'+titleAttr+'>'+esc(label.length>14?label.substring(0,12)+'\u2026':label)+'</div></td>';
+        var cellKey=f.id+'|'+iso;
+        var isSel=S.cotasSelected&&S.cotasSelected.indexOf(cellKey)>=0;
+        var selStyle=isSel?'box-shadow:0 0 0 2px #F15D1B inset;':'';
+        h+='<td style="padding:2px;text-align:center;border-left:1px solid #F5F3F1"><div onclick="cotasCellClick(event,\''+esc(f.id)+'\',\''+iso+'\')" style="background:'+bg+';color:'+fg+';border:1px solid '+bd+';border-radius:4px;padding:6px 4px;cursor:pointer;font-size:11px;line-height:1.3;min-height:28px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'+selStyle+'"'+titleAttr+'>'+esc(label.length>14?label.substring(0,12)+'\u2026':label)+'</div></td>';
       });
       h+='</tr>';
     });
@@ -985,25 +1015,32 @@ function vCotas(){
 
   return h;
 }
-function cotasSetupScroll(){
+function cotasSetupScroll(forceScrollToToday){
   var sc=document.getElementById('cotas-scroll');
   if(!sc)return;
-  // 1) scroll automatico ate o "hoje" (ou ultimo dia util)
-  // procura o th com data-date matching hoje ou ultimo dia util
-  var todayIso=cotasIso(cotasTodayBR());
-  var lastBizIso=cotasIso(cotasLastBusinessDay());
-  var ths=sc.querySelectorAll('th[data-date]');
-  var targetTh=null;
-  for(var i=0;i<ths.length;i++){
-    var d=ths[i].getAttribute('data-date');
-    if(d===todayIso){targetTh=ths[i];break;}
-    if(d===lastBizIso&&!targetTh)targetTh=ths[i];
-  }
-  if(targetTh){
-    // posiciona o "hoje" a ~70% da janela visivel (espaco a direita pra ver futuro)
-    var thLeft=targetTh.offsetLeft;
-    var visible=sc.clientWidth;
-    sc.scrollLeft=Math.max(0,thLeft-visible*0.7);
+  // preserva scroll atual se ja foi inicializado e nao foi forcado
+  var preserveScroll=sc._scrollInitialized&&!forceScrollToToday;
+  var savedScrollLeft=preserveScroll?sc.scrollLeft:null;
+  // 1) scroll automatico ate o "hoje" (ou ultimo dia util) — somente na 1a vez ou se forcado
+  if(!preserveScroll){
+    var todayIso=cotasIso(cotasTodayBR());
+    var lastBizIso=cotasIso(cotasLastBusinessDay());
+    var ths=sc.querySelectorAll('th[data-date]');
+    var targetTh=null;
+    for(var i=0;i<ths.length;i++){
+      var d=ths[i].getAttribute('data-date');
+      if(d===todayIso){targetTh=ths[i];break;}
+      if(d===lastBizIso&&!targetTh)targetTh=ths[i];
+    }
+    if(targetTh){
+      var thLeft=targetTh.offsetLeft;
+      var visible=sc.clientWidth;
+      sc.scrollLeft=Math.max(0,thLeft-visible*0.7);
+    }
+    sc._scrollInitialized=true;
+  }else{
+    // re-render mantendo posicao: restaura scroll exatamente onde estava
+    sc.scrollLeft=savedScrollLeft;
   }
   // 2) drag-to-scroll horizontal (clicar e arrastar, mas nao na area das celulas/linhas)
   if(sc._dragInited)return;
@@ -1162,6 +1199,40 @@ function cotasOpenCell(fundoId,iso){
   S.cotasCell={fundoId:fundoId,iso:iso,texto:undefined,cor:undefined};
   cotasRenderOverlay();
 }
+
+// handler de clique em celula: distingue Ctrl+clique (multi-select) de clique simples (abrir editor)
+function cotasCellClick(e,fundoId,iso){
+  e.stopPropagation();
+  var cellKey=fundoId+'|'+iso;
+  if(e.ctrlKey||e.metaKey){
+    // multi-select com Ctrl/Cmd
+    if(!S.cotasSelected)S.cotasSelected=[];
+    var idx=S.cotasSelected.indexOf(cellKey);
+    if(idx>=0)S.cotasSelected.splice(idx,1);
+    else S.cotasSelected.push(cellKey);
+    if(S.cotasSelected.length===0)S.cotasSelected=null;
+    R();
+    return;
+  }
+  // clique simples: limpa selecao multipla e abre editor
+  if(S.cotasSelected){S.cotasSelected=null;}
+  cotasOpenCell(fundoId,iso);
+}
+
+// apaga conteudo de todas as celulas selecionadas. NAO pede confirmacao por celula
+// (so uma confirmacao geral) — agiliza limpeza em massa.
+function cotasClearSelected(){
+  var sel=S.cotasSelected;
+  if(!sel||sel.length===0)return;
+  if(!confirm('Limpar conte\u00fado de '+sel.length+' c\u00e9lula(s) selecionada(s)? Esta a\u00e7\u00e3o n\u00e3o pode ser desfeita.'))return;
+  sel.forEach(function(k){delete S.cotas.entries[k];});
+  S.cotasSelected=null;
+  saveCotas();R();
+}
+
+function cotasClearSelection(){
+  S.cotasSelected=null;R();
+}
 function cotasCancelCell(e){
   if(e&&e.stopPropagation){e.stopPropagation();}
   S.cotasCell=null;
@@ -1193,12 +1264,10 @@ function cotasNavDate(deltaDays){
   if(deltaDays===0){
     S.cotasView.startDate=null;
     R();
-    // forca scroll pro 'hoje' apos render
     setTimeout(function(){
       var sc=document.getElementById('cotas-scroll');
-      if(!sc)return;
-      sc._dragInited=false; // permite recriar handlers se preciso
-      cotasSetupScroll();
+      if(sc)sc._scrollInitialized=false; // forca re-scroll
+      cotasSetupScroll(true);
     },50);
     return;
   }
@@ -1981,7 +2050,7 @@ function vFunds(){
 }
 
 // ─── ACTIONS ──────────────────────────────────────────────
-function go(v){S.view=v;S.showForm=false;S.editId=null;S.onDetail=null;S.onEdit=null;S.onNew=false;S.wireDetail=null;S.wireEdit=null;S.wireNew=false;S.wireSearch='';S.wireReveal={};S.placeholderTitle='';S.cotasCell=null;var ov=document.getElementById('cotas-overlay');if(ov){ov.style.display='none';ov.innerHTML='';}R();}
+function go(v){S.view=v;S.showForm=false;S.editId=null;S.onDetail=null;S.onEdit=null;S.onNew=false;S.wireDetail=null;S.wireEdit=null;S.wireNew=false;S.wireSearch='';S.wireReveal={};S.placeholderTitle='';S.cotasCell=null;S.cotasSelected=null;var ov=document.getElementById('cotas-overlay');if(ov){ov.style.display='none';ov.innerHTML='';}var sc=document.getElementById('cotas-scroll');if(sc)sc._scrollInitialized=false;R();}
 function goPlaceholder(title){S.view='placeholder';S.placeholderTitle=title;R();}
 function setFilter(k,v){S.filters[k]=v;R();}
 function clearFilters(){S.filters={fiv:'',tipo:'',status:''};R();}
