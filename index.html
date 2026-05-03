@@ -581,6 +581,7 @@ var COTAS_SEED=[
   {fundo:'VRB FIM',codigo:'INTRPATRIA62034',adm:'INTRAG',owner:'Weslley Alves'},
   {fundo:'VRB PREV FIM',codigo:'BNY12339',adm:'MELLON',owner:'Weslley Alves'},
   {fundo:'AVANTE FIM CP IE',codigo:'INTRPATRIA580',adm:'INTRAG',owner:'Livia Pieri'},
+  {fundo:'CORAL',codigo:'N/A',adm:'BTG',owner:'Livia Pieri'},
   {fundo:'DONOSTIA FIM CP IE',codigo:'INTRPATRIA578',adm:'INTRAG',owner:'Livia Pieri'},
   {fundo:'LIDIDU FIM CP',codigo:'INTRAG50450',adm:'BRADESCO',owner:'Livia Pieri'},
   {fundo:'LOREMA FIM CP IE',codigo:'INTRPATRIA577',adm:'INTRAG',owner:'Livia Pieri'},
@@ -594,12 +595,103 @@ var COTAS_SEED=[
   {fundo:'VRB PREV FI RF',codigo:'N/A',adm:'BTG',owner:'Livia Pieri'}
 ];
 
+// historico de batimento ja registrado na planilha excel original.
+// chave: nome do fundo (deve bater com COTAS_SEED.fundo). valor: {YYYY-MM-DD: texto}
+// cor padrao = green se texto contem "ok" no inicio; yellow se texto comeca com "Verificar" ou "checar"
+// ou contem "verificar"; red se "Pendente"; default green pra strings curtas tipo "ok".
+var COTAS_HIST={
+  'MALUBI FIM':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-10':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok'},
+  'VRB FIA':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-10':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok'},
+  'VRB FIM':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-10':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok'},
+  'VRB PREV FIM':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-10':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok'},
+  'AVANTE FIM CP IE':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'ok','2026-04-28':'ok','2026-04-29':'cobrei adm-30/04'},
+  'CORAL':{'2026-03-26':'cobrei adm- 27/03','2026-03-27':'cobrar adm','2026-04-01':'checar','2026-04-06':'Cobrei ADM - 07/04','2026-04-08':'cobrar adm','2026-04-29':'cobrei adm-30/04'},
+  'DONOSTIA FIM CP IE':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'ok','2026-04-28':'ok','2026-04-29':'cobrei adm-30/04'},
+  'LIDIDU FIM CP':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok_ arrumar RSPD11','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'cobrei adm-30/04','2026-04-28':'cobrei adm-30/04','2026-04-29':'cobrei adm-30/04'},
+  'LOREMA FIM CP IE':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'ok','2026-04-28':'ok','2026-04-29':'cobrei adm-30/04'},
+  'PADOVA FIM CP IE':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'ok','2026-04-28':'ok','2026-04-29':'cobrei adm-30/04'},
+  'RM FIM IE':{'2026-03-26':'ok','2026-03-27':'ok- Prif 11','2026-03-30':'ok- Prif 11','2026-03-31':'ok- Prif 11','2026-04-01':'ok- Prif 11','2026-04-02':'ok- Prif 11','2026-04-06':'ok- Prif 11','2026-04-07':'ok obs: ajuste Prif 11 acontecer\u00e1- compra ficou para o dia 07/04','2026-04-08':'ok obs: ajuste Prif 11 acontecer\u00e1- compra ficou para o dia 07/04','2026-04-09':'ok obs: ajuste Prif 11 acontecer\u00e1- compra ficou para o dia 07/04','2026-04-13':'ok obs: ajuste Prif 11 acontecer\u00e1- compra ficou para o dia 07/04','2026-04-14':'ok obs: ajuste Prif 11 acontecer\u00e1- compra ficou para o dia 07/04','2026-04-15':'ok obs: ajuste Prif 11','2026-04-16':'ok obs: ajuste Prif 11','2026-04-17':'Verificar- Rendimento 16/04 (aguardando retorno adm)','2026-04-20':'Verificar- Rendimento 16/04 (aguardando retorno adm)','2026-04-22':'Verificar- Rendimento 16/04 (aguardando retorno adm)','2026-04-23':'Verificar- Rendimento 16/04 (aguardando retorno adm)/ Prif11 liquidado','2026-04-24':'Verificar- Rendimento 16/04 (aguardando retorno adm)/ Prif11 liquidado','2026-04-27':'Verificar- Rendimento 16/04 (adm vai ajustar)/ Prif11 liquidado','2026-04-28':'Verificar- Rendimento 16/04 (adm vai ajustar)/ Prif11 liquidado','2026-04-29':'cobrei adm-30/04'},
+  'TERA CRED FV':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok Avaliar outros no pr\u00f3ximo batimento. Auditoria externa est\u00e1 vindo na carteira, mas n\u00e3o est\u00e1 vindo no XML','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'ok','2026-04-28':'ok','2026-04-29':'ok'},
+  'TERA DC FIC FIA':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'ok','2026-04-28':'ok','2026-04-29':'ok'},
+  'TERA EQUITY':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'ok','2026-04-28':'ok','2026-04-29':'cobrei adm-30/04'},
+  'TERA PREV ICATU':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'ok','2026-04-28':'ok','2026-04-29':'cobrei adm-30/04'},
+  'TERA YIELD':{'2026-03-26':'Pendente cota FIDC','2026-03-27':'Pendente cota FIDC','2026-03-30':'Pendente cota FIDC','2026-03-31':'Pendente cota FIDC','2026-04-01':'Pendente cota FIDC','2026-04-02':'Pendente cota FIDC','2026-04-06':'Pendente cota FIDC','2026-04-07':'Pendente cota FIDC','2026-04-08':'ok','2026-04-09':'ok','2026-04-13':'ok','2026-04-14':'ok','2026-04-15':'ok','2026-04-16':'ok','2026-04-17':'ok','2026-04-20':'ok','2026-04-22':'ok','2026-04-23':'ok','2026-04-24':'ok','2026-04-27':'cota dispon\u00edvel- Parisi est\u00e1 verificando a inclus\u00e3o FIDC (BTG)','2026-04-28':'cota dispon\u00edvel- Parisi est\u00e1 verificando a inclus\u00e3o FIDC (BTG)','2026-04-29':'cobrar adm'},
+  'VRB PREV FI RF':{'2026-03-26':'ok','2026-03-27':'ok','2026-03-30':'ok','2026-03-31':'ok- Taxa CETIP n\u00e3o est\u00e1 nas movimenta\u00e7\u00f5es do Caixa (ajustou cota dia seguinte)','2026-04-01':'ok','2026-04-02':'ok','2026-04-06':'ok','2026-04-07':'ok','2026-04-08':'verificar diff other provision','2026-04-09':'verificar diff other provision','2026-04-13':'verificar diff other provision','2026-04-14':'verificar diff other provision','2026-04-15':'verificar diff other provision','2026-04-16':'verificar diff other provision','2026-04-17':'verificar diff other provision','2026-04-20':'verificar diff other provision','2026-04-22':'verificar diff other provision','2026-04-23':'verificar diff other provision','2026-04-24':'verificar diff other provision','2026-04-27':'verificar diff other provision','2026-04-28':'cobrei adm- 29/04','2026-04-29':'cobrar adm'}
+};
+
+// feriados conhecidos (Sexta-feira Santa, Tiradentes). Usuario pode adicionar mais.
+var COTAS_FERIADOS_SEED=['2026-04-03','2026-04-21','2026-05-01'];
+
+// retorna uma Date com horario de Brasilia (sao paulo) — usado pra "hoje"
+// independente do fuso do navegador.
+function cotasNowBR(){
+  var brStr=new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'});
+  return new Date(brStr);
+}
+function cotasTodayBR(){
+  var n=cotasNowBR();
+  return new Date(n.getFullYear(),n.getMonth(),n.getDate());
+}
+
+// classifica uma string em cor com base no conteudo
+function cotasInferColor(text){
+  if(!text)return'gray';
+  var t=text.trim().toLowerCase();
+  if(!t)return'gray';
+  if(t.indexOf('pendente')===0)return'red';
+  if(t.indexOf('verificar')>=0||t.indexOf('checar')>=0||t.indexOf('cobrar')>=0)return'yellow';
+  return'green';
+}
+
 function cotasInit(){
-  // se a config ainda esta vazia, popula com o seed (uma unica vez)
+  // primeira vez (config vazia): popula tudo do zero
   if(!S.cotas.config||S.cotas.config.length===0){
     S.cotas.config=COTAS_SEED.map(function(c){return{id:uid(),fundo:c.fundo,codigo:c.codigo,adm:c.adm,owner:c.owner};});
+    var byName={};S.cotas.config.forEach(function(c){byName[c.fundo]=c.id;});
+    Object.keys(COTAS_HIST).forEach(function(name){
+      var id=byName[name];if(!id)return;
+      var hist=COTAS_HIST[name];
+      Object.keys(hist).forEach(function(iso){
+        var txt=hist[iso];
+        S.cotas.entries[id+'|'+iso]={t:txt,c:cotasInferColor(txt)};
+      });
+    });
+    if(!S.cotas.feriados||S.cotas.feriados.length===0){
+      S.cotas.feriados=COTAS_FERIADOS_SEED.slice();
+    }
     saveCotas();
+    return;
   }
+  // ja existe config: faz migracao aditiva (nao sobrescreve nada)
+  var changed=false;
+  // (a) adiciona fundos do seed que ainda nao estao na config
+  var existingNames={};S.cotas.config.forEach(function(c){existingNames[c.fundo]=true;});
+  COTAS_SEED.forEach(function(seed){
+    if(!existingNames[seed.fundo]){
+      S.cotas.config.push({id:uid(),fundo:seed.fundo,codigo:seed.codigo,adm:seed.adm,owner:seed.owner});
+      changed=true;
+    }
+  });
+  // (b) backfill de entries historicos APENAS pra chaves que nao existem
+  var nameToId={};S.cotas.config.forEach(function(c){nameToId[c.fundo]=c.id;});
+  Object.keys(COTAS_HIST).forEach(function(name){
+    var id=nameToId[name];if(!id)return;
+    var hist=COTAS_HIST[name];
+    Object.keys(hist).forEach(function(iso){
+      var k=id+'|'+iso;
+      if(!S.cotas.entries[k]){
+        var txt=hist[iso];
+        S.cotas.entries[k]={t:txt,c:cotasInferColor(txt)};
+        changed=true;
+      }
+    });
+  });
+  // (c) adiciona feriados conhecidos que faltam
+  if(!S.cotas.feriados)S.cotas.feriados=[];
+  COTAS_FERIADOS_SEED.forEach(function(f){
+    if(S.cotas.feriados.indexOf(f)<0){S.cotas.feriados.push(f);changed=true;}
+  });
+  if(changed)saveCotas();
 }
 
 function cotasFmtDate(d){
@@ -624,7 +716,7 @@ function cotasGetBusinessDays(weeks){
   // retorna array de datas dos ultimos N semanas (incluindo hoje), so dias uteis,
   // em ordem cronologica crescente. weeks=4 -> ~20 dias uteis
   var out=[];
-  var start=S.cotasView.startDate?cotasParseIso(S.cotasView.startDate):new Date();
+  var start=S.cotasView.startDate?cotasParseIso(S.cotasView.startDate):cotasTodayBR();
   start=new Date(start.getFullYear(),start.getMonth(),start.getDate()); // zero-time
   var begin=new Date(start);begin.setDate(begin.getDate()-(weeks*7-1));
   var cursor=new Date(begin);
@@ -692,7 +784,6 @@ function vCotas(){
   h+='<button class="btn sm" onclick="cotasNavDate(-7)" title="Semana anterior">\u00ab</button>';
   h+='<button class="btn sm" onclick="cotasNavDate(0)">Hoje</button>';
   h+='<button class="btn sm" onclick="cotasNavDate(7)" title="Pr\u00f3xima semana">\u00bb</button>';
-  h+='<button class="btn sm" onclick="cotasManageFundos()">Gerenciar fundos</button>';
   h+='<button class="btn sm" onclick="cotasManageFeriados()">Feriados</button>';
   h+='</div></div>';
 
@@ -719,7 +810,7 @@ function vCotas(){
   h+='<th style="padding:8px 10px;text-align:left;font-weight:600;color:#626367;border-bottom:1px solid #EAE7E3;min-width:110px">Owner</th>';
   dates.forEach(function(d){
     var iso=cotasIso(d);
-    var today=cotasIso(new Date());
+    var today=cotasIso(cotasTodayBR());
     var isToday=iso===today;
     h+='<th style="padding:8px 6px;text-align:center;font-weight:600;color:'+(isToday?'#F15D1B':'#626367')+';border-bottom:1px solid #EAE7E3;min-width:70px;font-size:11px"'+(isToday?' title="Hoje"':'')+'>'+cotasFmtDate(d)+(isToday?' \u25cf':'')+'</th>';
   });
@@ -826,7 +917,7 @@ function cotasClearCell(){
 function cotasNavDate(deltaDays){
   if(deltaDays===0){S.cotasView.startDate=null;}
   else{
-    var cur=S.cotasView.startDate?cotasParseIso(S.cotasView.startDate):new Date();
+    var cur=S.cotasView.startDate?cotasParseIso(S.cotasView.startDate):cotasTodayBR();
     cur.setDate(cur.getDate()+deltaDays);
     S.cotasView.startDate=cotasIso(cur);
   }
