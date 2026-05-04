@@ -943,14 +943,9 @@ function vCotas(){
   }
   h+='</div>';
 
-  // barra de selecao multipla (visivel quando ha celulas selecionadas)
-  if(S.cotasSelected&&S.cotasSelected.length>0){
-    h+='<div id="cotas-selbar" style="background:#FEF3EC;border:1px solid #F8C9A6;border-radius:6px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
-    h+='<span id="cotas-selbar-count" style="font-size:13px;color:#7A3C10;font-weight:600">'+S.cotasSelected.length+' c\u00e9lula(s) selecionada(s)</span>';
-    h+='<span style="font-size:12px;color:#9A958F">Ctrl/Cmd+clique para selecionar mais &middot; Duplo-clique abre o editor &middot; Delete limpa &middot; Esc cancela</span>';
-    h+='<div style="margin-left:auto;display:flex;gap:6px"><button class="btn sm dr" onclick="cotasClearSelected()">Limpar conte\u00fado</button><button class="btn sm" onclick="cotasClearSelection()">Cancelar</button></div>';
-    h+='</div>';
-  }
+  // (barra de selecao removida — selecao multipla continua funcional via Ctrl+clique,
+  // Delete pra limpar e Esc pra cancelar, sem o aviso visual)
+
 
   // tabela
   h+='<div id="cotas-scroll" style="overflow-x:auto;border:1px solid #EAE7E3;border-radius:6px;user-select:none">';
@@ -1116,7 +1111,7 @@ function cotasCellEditorHTML(){
     h+='<button onclick="cotasPickColor(\''+col+'\')" style="flex:1;padding:8px;border:'+bw+' solid '+border+';background:'+bg+';color:'+cotasColorText(col)+';border-radius:6px;cursor:pointer;font-weight:'+weight+';font-size:13px;transition:all .12s ease">'+check+lbl+'</button>';
   });
   h+='</div>';
-  h+='<label class="lb">Texto / observa\u00e7\u00e3o <span style="color:#9A958F;font-size:11px;font-weight:400">(Enter para salvar, Shift+Enter para quebrar linha)</span></label>';
+  h+='<label class="lb">Texto / observa\u00e7\u00e3o</label>';
   var initialText=c.texto!==undefined?c.texto:entry.t;
   h+='<textarea id="cota-cell-text" class="ip" rows="3" style="resize:vertical;font-family:inherit;margin-bottom:14px" placeholder="ex: ok, ou observa\u00e7\u00e3o livre" onkeydown="cotasCellKeydown(event)">'+esc(initialText)+'</textarea>';
   h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">';
@@ -1170,20 +1165,8 @@ function cotasUpdateCellVisual(cellKey){
   else{el.style.boxShadow='';}
 }
 
-// atualiza a barra de selecao (contador "X celulas selecionadas") sem re-render.
-function cotasUpdateSelectionBar(){
-  var sel=S.cotasSelected||[];
-  var bar=document.getElementById('cotas-selbar');
-  if(sel.length===0){if(bar)bar.style.display='none';return;}
-  if(!bar){
-    // se nao existe, precisa de re-render uma vez pra criar (acontece so na 1a selecao)
-    R();
-    return;
-  }
-  bar.style.display='flex';
-  var counter=document.getElementById('cotas-selbar-count');
-  if(counter)counter.textContent=sel.length+' c\u00e9lula(s) selecionada(s)';
-}
+// (ex-funcao de atualizar barra de selecao — agora no-op pois a barra foi removida)
+function cotasUpdateSelectionBar(){}
 
 // handler de clique simples em celula: SELECIONA (sem abrir editor)
 // - sem Ctrl: substitui selecao atual por essa celula
@@ -1218,13 +1201,10 @@ function cotasCellClick(e,fundoId,iso){
 // handler de duplo-clique: ABRE editor
 function cotasCellDblClick(e,fundoId,iso){
   e.stopPropagation();
-  // limpa selecao atual (sem re-render visual da barra: o R() do open vai cuidar)
   if(S.cotasSelected){
     var prev=S.cotasSelected.slice();
     S.cotasSelected=null;
     prev.forEach(cotasUpdateCellVisual);
-    var bar=document.getElementById('cotas-selbar');
-    if(bar)bar.style.display='none';
   }
   cotasOpenCell(fundoId,iso);
 }
@@ -1243,8 +1223,6 @@ function cotasClearSelection(){
   var prev=(S.cotasSelected||[]).slice();
   S.cotasSelected=null;
   prev.forEach(cotasUpdateCellVisual);
-  var bar=document.getElementById('cotas-selbar');
-  if(bar)bar.style.display='none';
 }
 function cotasCancelCell(e){
   if(e&&e.stopPropagation){e.stopPropagation();}
